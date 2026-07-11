@@ -1,3 +1,54 @@
 /* You can add global styles to this file, and also import other style files */
 
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
+
+/* fin — design system tokens */
+@theme {
+  --font-display: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Brand */
+  --color-ink: #10182b;
+  --color-primary: #2e4b8f;
+  --color-primary-dark: #223a72;
+  --color-primary-soft: #e6e9f2;
+  --color-accent: #c7d93e;
+
+  /* Semantic (amounts) */
+  --color-positive: #2e9e6b;
+  --color-positive-soft: #e5f3ec;
+  --color-negative: #e0576b;
+  --color-negative-soft: #fbe8ea;
+
+  /* Neutrals */
+  --color-paper: #f6f7fb;
+  --color-surface: #ffffff;
+  --color-border: #e6e9f2;
+  --color-muted: #6b7190;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-paper);
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* Subtle, elevated shadow used on cards and menus */
+.shadow-elevated {
+  box-shadow:
+    0 1px 2px 0 rgb(16 24 43 / 0.04),
+    0 12px 30px -8px rgb(16 24 43 / 0.1);
+}

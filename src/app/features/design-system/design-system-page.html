@@ -1,0 +1,160 @@
+<div class="mx-auto max-w-5xl px-6 pb-32 sm:px-10">
+  <!-- ============ HEADER ============ -->
+  <header class="bg-ink relative mx-[-1.5rem] mb-16 overflow-hidden rounded-b-[28px] px-6 py-12 sm:mx-[-2.5rem] sm:px-12 sm:py-16">
+    <div class="border-primary absolute -top-16 -right-10 h-56 w-56 rounded-full border-[34px] opacity-50"></div>
+    <div class="border-accent absolute right-36 -bottom-16 h-32 w-32 rounded-full border-[24px] opacity-40"></div>
+    <div class="relative flex flex-col gap-5">
+      <span class="text-accent text-[13px] font-semibold tracking-[0.22em] uppercase">Sistema de diseño</span>
+      <h1 class="text-paper max-w-[16ch] text-[44px] leading-[1.05] font-bold sm:text-[52px]">Claridad para tus finanzas personales</h1>
+      <p class="text-paper/60 max-w-[52ch] text-lg">Índigo medianoche como color de marca, Poppins como tipografía única, y color semántico para que cada monto se entienda de un vistazo.</p>
+    </div>
+  </header>
+
+  <!-- ============ 01 COLOR ============ -->
+  <section class="mb-24">
+    <div class="mb-2 flex items-baseline gap-4">
+      <span class="text-primary text-[13px] font-bold">01</span>
+      <h2 class="text-[34px] font-bold">Color</h2>
+    </div>
+    <p class="text-muted mb-8 max-w-[60ch]">El índigo ancla la interfaz y transmite confianza. Verde y rojo son siempre los mismos para positivo y negativo &mdash; nunca se usan para otra cosa.</p>
+
+    @for (group of colorGroups; track group.title) {
+    <h3 class="text-muted mb-4 text-[13px] font-semibold tracking-[0.08em] uppercase">{{ group.title }}</h3>
+    <div class="mb-10 grid grid-cols-2 gap-5 sm:grid-cols-3">
+      @for (swatch of group.swatches; track swatch.hex) {
+      <div class="border-border overflow-hidden rounded-[20px] border">
+        <div
+          class="flex h-[92px] items-end p-3"
+          [style.background-color]="swatch.hex">
+          <span
+            class="rounded-md px-2 py-0.5 text-[11px] font-medium"
+            [class]="swatch.on === 'dark' ? 'bg-black/15 text-ink' : 'bg-white/85 text-ink'"
+            >Aa</span
+          >
+        </div>
+        <div class="bg-surface p-4">
+          <div class="text-[15px] font-semibold">{{ swatch.name }}</div>
+          <div class="text-primary mt-1.5 font-mono text-xs">{{ swatch.hex }} · {{ swatch.token }}</div>
+        </div>
+      </div>
+      }
+    </div>
+    }
+  </section>
+
+  <!-- ============ 02 TYPOGRAPHY ============ -->
+  <section class="mb-24">
+    <div class="mb-2 flex items-baseline gap-4">
+      <span class="text-primary text-[13px] font-bold">02</span>
+      <h2 class="text-[34px] font-bold">Tipografía</h2>
+    </div>
+    <p class="text-muted mb-8 max-w-[60ch]">Una sola familia: <strong class="text-ink font-semibold">Poppins</strong>. Regular y Medium para el cuerpo, Semibold y Bold para énfasis y cifras.</p>
+    <div class="shadow-elevated border-border bg-surface rounded-[22px] border p-8 sm:p-11">
+      <div class="flex flex-col gap-6">
+        @for (type of typeScale; track type.label) {
+        <div class="border-border flex flex-col gap-2 border-b pb-6 last:border-b-0 last:pb-0 sm:flex-row sm:items-baseline sm:gap-6">
+          <span class="text-muted w-32 flex-none text-xs">{{ type.label }}</span>
+          <span [class]="type.class">{{ type.sample }}</span>
+        </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 BUTTONS ============ -->
+  <section class="mb-24">
+    <div class="mb-2 flex items-baseline gap-4">
+      <span class="text-primary text-[13px] font-bold">03</span>
+      <h2 class="text-[34px] font-bold">Botones</h2>
+    </div>
+    <p class="text-muted mb-8 max-w-[60ch]">Siempre en forma de píldora, con peso semibold. Transición suave de color al pasar el cursor.</p>
+    <div class="grid gap-6 sm:grid-cols-2">
+      <div class="shadow-elevated border-border bg-surface flex flex-wrap items-center gap-4 rounded-[22px] border p-8">
+        <button
+          type="button"
+          class="bg-primary hover:bg-primary-dark rounded-full px-7 py-3.5 text-base font-semibold text-white transition-colors duration-300">
+          Agregar movimiento
+        </button>
+        <button
+          type="button"
+          class="bg-ink hover:bg-ink/85 rounded-full px-7 py-3.5 text-base font-semibold text-white transition-colors duration-300">
+          Ver reporte
+        </button>
+        <button
+          type="button"
+          class="border-ink text-ink hover:bg-ink rounded-full border px-7 py-3.5 text-base font-semibold transition-colors duration-300 hover:text-white">
+          Cancelar
+        </button>
+      </div>
+      <div class="bg-ink flex flex-wrap items-center gap-4 rounded-[22px] p-8">
+        <button
+          type="button"
+          class="bg-primary hover:bg-primary-dark rounded-full px-7 py-3.5 text-base font-semibold text-white transition-colors duration-300">
+          Nuevo presupuesto
+        </button>
+        <button
+          type="button"
+          class="hover:text-primary rounded-full border border-white px-7 py-3.5 text-base font-semibold text-white transition-colors duration-300 hover:bg-white">
+          Empezar
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 CARDS & METRICS ============ -->
+  <section class="mb-24">
+    <div class="mb-2 flex items-baseline gap-4">
+      <span class="text-primary text-[13px] font-bold">04</span>
+      <h2 class="text-[34px] font-bold">Tarjetas &amp; métricas</h2>
+    </div>
+    <p class="text-muted mb-8 max-w-[60ch]">Superficies blancas sobre fondo lavanda-azulado, esquinas generosas y sombra suave. Los montos siempre usan el color semántico correspondiente.</p>
+    <div class="bg-primary-soft grid grid-cols-1 gap-6 rounded-[24px] p-8 sm:grid-cols-3">
+      @for (metric of metrics; track metric.label) {
+      <div class="bg-surface rounded-[20px] px-7 py-9 text-center shadow-[0_10px_30px_rgba(16,24,43,0.06)]">
+        <div
+          class="text-[40px] leading-none font-bold"
+          [class]="{ positive: 'text-positive', negative: 'text-negative', primary: 'text-primary' }[metric.tone]">
+          {{ metric.value }}
+        </div>
+        <div class="mt-3 text-base font-medium">{{ metric.label }}</div>
+      </div>
+      }
+    </div>
+  </section>
+
+  <!-- ============ 05 FORMS ============ -->
+  <section>
+    <div class="mb-2 flex items-baseline gap-4">
+      <span class="text-primary text-[13px] font-bold">05</span>
+      <h2 class="text-[34px] font-bold">Formularios</h2>
+    </div>
+    <p class="text-muted mb-8 max-w-[60ch]">Campos limpios con borde tenue y foco índigo. Un selector compacto de tipo de movimiento acompaña el monto.</p>
+    <form class="shadow-elevated border-border bg-surface flex max-w-xl flex-col gap-5 rounded-[22px] border p-8 sm:p-11">
+      <label class="flex flex-col gap-2">
+        <span class="text-muted text-sm font-medium">Descripción</span>
+        <input
+          type="text"
+          placeholder="Supermercado"
+          class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 font-sans text-base outline-none" />
+      </label>
+      <label class="flex flex-col gap-2">
+        <span class="text-muted text-sm font-medium">Monto</span>
+        <input
+          type="number"
+          placeholder="0.00"
+          class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 font-sans text-base outline-none" />
+      </label>
+      <div class="flex flex-wrap items-center justify-between gap-4 pt-1.5">
+        <div class="bg-primary-soft text-ink flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm">
+          <span class="bg-negative inline-block h-2.5 w-2.5 rounded-full"></span>
+          Tipo: Gasto
+        </div>
+        <button
+          type="submit"
+          class="bg-primary hover:bg-primary-dark rounded-full px-7 py-3 text-base font-semibold text-white transition-colors duration-300">
+          Guardar
+        </button>
+      </div>
+    </form>
+  </section>
+</div>
