@@ -1,0 +1,83 @@
+<div class="flex items-center justify-between gap-4">
+  <div>
+    <h1 class="text-ink text-[28px] font-bold">Cuentas</h1>
+    <p class="text-muted mt-1 text-sm">Bancos, efectivo, tarjetas y cripto en un solo lugar.</p>
+  </div>
+  <button
+    type="button"
+    (click)="openCreateForm()"
+    class="bg-primary hover:bg-primary-dark rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors duration-300">
+    + Nueva cuenta
+  </button>
+</div>
+
+@if (accountsService.isLoading() && accountsService.accounts().length === 0) {
+<p class="text-muted mt-10 text-sm">Cargando cuentas…</p>
+} @else if (accountsService.error()) {
+<p class="bg-negative-soft text-negative mt-10 rounded-lg px-4 py-3 text-sm">{{ accountsService.error() }}</p>
+} @else if (accountsService.accounts().length === 0) {
+<div class="border-border bg-surface mt-10 flex flex-col items-center justify-center rounded-[22px] border border-dashed px-8 py-20 text-center">
+  <h2 class="text-ink text-lg font-bold">Todavía no tienes cuentas</h2>
+  <p class="text-muted mt-2 max-w-[42ch] text-sm">Agrega tu primera cuenta para empezar a registrar movimientos.</p>
+  <button
+    type="button"
+    (click)="openCreateForm()"
+    class="bg-primary hover:bg-primary-dark mt-6 rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors duration-300">
+    + Nueva cuenta
+  </button>
+</div>
+} @else {
+<div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  @for (account of accountsService.accounts(); track account.id) {
+  <div class="border-border bg-surface flex flex-col gap-4 rounded-[20px] border p-6">
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="bg-primary-soft text-primary flex h-10 w-10 items-center justify-center rounded-xl">
+          <app-nav-icon [name]="typeIcons[account.type]" />
+        </span>
+        <div>
+          <p class="text-ink font-semibold">{{ account.name }}</p>
+          <p class="text-muted text-sm">{{ typeLabels[account.type] }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-muted flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+      @if (account.currency) {
+      <span>{{ account.currency }}</span>
+      } @if (account.institution) {
+      <span>{{ account.institution }}</span>
+      } @if (account.type === 'credit_card' && account.creditLimit) {
+      <span>Cupo {{ account.creditLimit | number: '1.0-0' }}</span>
+      }
+    </div>
+
+    <div class="mt-auto flex gap-2 pt-2">
+      <button
+        type="button"
+        (click)="openEditForm(account)"
+        class="border-border text-ink hover:border-ink flex-1 rounded-full border px-4 py-2 text-sm font-semibold transition-colors duration-300">
+        Editar
+      </button>
+      <button
+        type="button"
+        (click)="deletingAccount.set(account)"
+        class="border-negative/30 text-negative hover:bg-negative-soft flex-1 rounded-full border px-4 py-2 text-sm font-semibold transition-colors duration-300">
+        Eliminar
+      </button>
+    </div>
+  </div>
+  }
+</div>
+} @if (isFormOpen()) {
+<app-account-form
+  [account]="editingAccount()"
+  (saved)="closeForm()"
+  (cancelled)="closeForm()" />
+} @if (deletingAccount(); as account) {
+<app-confirm-dialog
+  title="Eliminar cuenta"
+  [message]="'¿Eliminar ' + account.name + '? Se borrarán también todos sus movimientos. Esta acción no se puede deshacer.'"
+  (confirmed)="handleDeleteConfirmed()"
+  (cancelled)="deletingAccount.set(null)" />
+}
