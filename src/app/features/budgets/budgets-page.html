@@ -1,0 +1,83 @@
+<div class="flex items-center justify-between gap-4">
+  <div>
+    <h1 class="text-ink text-[28px] font-bold">Presupuestos</h1>
+    <p class="text-muted mt-1 text-sm">Ponle un límite a tus categorías de gasto.</p>
+  </div>
+  <button
+    type="button"
+    (click)="openCreateForm()"
+    class="bg-primary hover:bg-primary-dark rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors duration-300">
+    + Nuevo presupuesto
+  </button>
+</div>
+
+@if (budgetsService.isLoading() && budgetsService.budgets().length === 0) {
+<p class="text-muted mt-10 text-sm">Cargando presupuestos…</p>
+} @else if (budgetsService.error()) {
+<p class="bg-negative-soft text-negative mt-10 rounded-lg px-4 py-3 text-sm">{{ budgetsService.error() }}</p>
+} @else if (budgetsService.budgets().length === 0) {
+<div class="border-border bg-surface mt-10 flex flex-col items-center justify-center rounded-[22px] border border-dashed px-8 py-20 text-center">
+  <h2 class="text-ink text-lg font-bold">Todavía no tienes presupuestos</h2>
+  <p class="text-muted mt-2 max-w-[42ch] text-sm">Define un límite mensual (o del período que quieras) por categoría.</p>
+  <button
+    type="button"
+    (click)="openCreateForm()"
+    class="bg-primary hover:bg-primary-dark mt-6 rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors duration-300">
+    + Nuevo presupuesto
+  </button>
+</div>
+} @else {
+<div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  @for (budget of budgetsService.budgets(); track budget.id) {
+  <div class="border-border bg-surface flex flex-col gap-4 rounded-[20px] border p-6">
+    <div>
+      <p class="text-ink font-semibold">{{ budget.name || categoryName(budget.categoryId) }}</p>
+      <p class="text-muted text-sm">{{ categoryName(budget.categoryId) }} · {{ budget.periodStart }} → {{ budget.periodEnd }}</p>
+    </div>
+
+    <div>
+      <div class="flex items-baseline justify-between text-sm">
+        <span
+          class="font-semibold"
+          [class]="budget.spentAmount > budget.amount ? 'text-negative' : 'text-ink'">
+          {{ budget.spentAmount | number: '1.0-0' }}
+        </span>
+        <span class="text-muted">de {{ budget.amount | number: '1.0-0' }} {{ budget.currency }}</span>
+      </div>
+      <div class="bg-primary-soft mt-2 h-2 overflow-hidden rounded-full">
+        <div
+          class="h-full rounded-full transition-all duration-300"
+          [class]="budget.spentAmount > budget.amount ? 'bg-negative' : 'bg-primary'"
+          [style.width.%]="progressPercent(budget)"></div>
+      </div>
+    </div>
+
+    <div class="mt-auto flex gap-2 pt-2">
+      <button
+        type="button"
+        (click)="openEditForm(budget)"
+        class="border-border text-ink hover:border-ink flex-1 rounded-full border px-4 py-2 text-sm font-semibold transition-colors duration-300">
+        Editar
+      </button>
+      <button
+        type="button"
+        (click)="deletingBudget.set(budget)"
+        class="border-negative/30 text-negative hover:bg-negative-soft flex-1 rounded-full border px-4 py-2 text-sm font-semibold transition-colors duration-300">
+        Eliminar
+      </button>
+    </div>
+  </div>
+  }
+</div>
+} @if (isFormOpen()) {
+<app-budget-form
+  [budget]="editingBudget()"
+  (saved)="closeForm()"
+  (cancelled)="closeForm()" />
+} @if (deletingBudget(); as budget) {
+<app-confirm-dialog
+  title="Eliminar presupuesto"
+  message="¿Eliminar este presupuesto? Esta acción no se puede deshacer."
+  (confirmed)="handleDeleteConfirmed()"
+  (cancelled)="deletingBudget.set(null)" />
+}
