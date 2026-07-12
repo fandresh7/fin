@@ -42,10 +42,16 @@
       </div>
     </div>
 
+    @if (account.type !== 'crypto_exchange') {
+    <div
+      class="text-[26px] font-bold"
+      [class]="account.balance < 0 ? 'text-negative' : 'text-ink'">
+      {{ account.balance | number: '1.0-0' }} {{ account.currency }}
+    </div>
+    }
+
     <div class="text-muted flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-      @if (account.currency) {
-      <span>{{ account.currency }}</span>
-      } @if (account.institution) {
+      @if (account.institution) {
       <span>{{ account.institution }}</span>
       } @if (account.type === 'credit_card' && account.creditLimit) {
       <span>Cupo {{ account.creditLimit | number: '1.0-0' }}</span>

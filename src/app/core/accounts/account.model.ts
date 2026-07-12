@@ -11,6 +11,7 @@ export interface Account {
   paymentDueDay: number | null
   isArchived: boolean
   createdAt: string
+  balance: number
 }
 
 export interface AccountInput {
@@ -44,4 +45,9 @@ export interface AccountRow {
   payment_due_day: number | null
   is_archived: boolean
   created_at: string
+}
+
+export interface AccountBalanceRow {
+  account_id: string
+  balance: number
 }

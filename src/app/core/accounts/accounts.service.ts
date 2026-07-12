@@ -1,9 +1,9 @@
 import { Service, inject, signal } from '@angular/core'
 import { AuthService } from '../auth/auth.service'
 import { SupabaseClientService } from '../supabase/supabase-client.service'
-import { Account, AccountInput, AccountRow } from './account.model'
+import { Account, AccountBalanceRow, AccountInput, AccountRow } from './account.model'
 
-function fromRow(row: AccountRow): Account {
+function fromRow(row: AccountRow, balance = 0): Account {
   return {
     id: row.id,
     name: row.name,
@@ -14,7 +14,8 @@ function fromRow(row: AccountRow): Account {
     cutoffDay: row.cutoff_day,
     paymentDueDay: row.payment_due_day,
     isArchived: row.is_archived,
-    createdAt: row.created_at
+    createdAt: row.created_at,
+    balance
   }
 }
 
@@ -59,7 +60,18 @@ export class AccountsService {
       return
     }
 
-    this._accounts.set((data as AccountRow[]).map(fromRow))
+    const rows = data as AccountRow[]
+    const { data: balanceRows } = await this.supabase
+      .from('account_balances')
+      .select('account_id, balance')
+      .in(
+        'account_id',
+        rows.map(row => row.id)
+      )
+
+    const balanceByAccountId = new Map((balanceRows as AccountBalanceRow[] | null)?.map(row => [row.account_id, row.balance]))
+
+    this._accounts.set(rows.map(row => fromRow(row, balanceByAccountId.get(row.id) ?? 0)))
     this._isLoading.set(false)
   }
 
@@ -80,7 +92,7 @@ export class AccountsService {
     const { data, error } = await this.supabase.from('accounts').update(toRow(input, userId)).eq('id', id).select().single()
     if (error) throw error
 
-    this._accounts.update(list => list.map(account => (account.id === id ? fromRow(data as AccountRow) : account)))
+    this._accounts.update(list => list.map(account => (account.id === id ? fromRow(data as AccountRow, account.balance) : account)))
   }
 
   async remove(id: string): Promise<void> {
