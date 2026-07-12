@@ -1,0 +1,79 @@
+<div class="flex items-center justify-between gap-4">
+  <div>
+    <h1 class="text-ink text-[28px] font-bold">Movimientos</h1>
+    <p class="text-muted mt-1 text-sm">Ingresos, gastos y transferencias entre tus cuentas.</p>
+  </div>
+  <button
+    type="button"
+    (click)="openCreateForm()"
+    class="bg-primary hover:bg-primary-dark rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors duration-300">
+    + Nuevo movimiento
+  </button>
+</div>
+
+@if (transactionsService.isLoading() && transactionsService.transactions().length === 0) {
+<p class="text-muted mt-10 text-sm">Cargando movimientos…</p>
+} @else if (transactionsService.error()) {
+<p class="bg-negative-soft text-negative mt-10 rounded-lg px-4 py-3 text-sm">{{ transactionsService.error() }}</p>
+} @else if (transactionsService.transactions().length === 0) {
+<div class="border-border bg-surface mt-10 flex flex-col items-center justify-center rounded-[22px] border border-dashed px-8 py-20 text-center">
+  <h2 class="text-ink text-lg font-bold">Todavía no tienes movimientos</h2>
+  <p class="text-muted mt-2 max-w-[42ch] text-sm">Registra tu primer ingreso, gasto o transferencia.</p>
+  <button
+    type="button"
+    (click)="openCreateForm()"
+    class="bg-primary hover:bg-primary-dark mt-6 rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors duration-300">
+    + Nuevo movimiento
+  </button>
+</div>
+} @else {
+<div class="border-border bg-surface mt-8 overflow-hidden rounded-[20px] border">
+  @for (tx of transactionsService.transactions(); track tx.id) {
+  <div class="border-border flex items-center gap-4 border-b px-6 py-4 last:border-b-0">
+    <div class="text-muted w-24 flex-none text-sm">{{ tx.occurredAt }}</div>
+
+    <div class="min-w-0 flex-1">
+      <p class="text-ink truncate font-medium">{{ tx.description || (tx.type === 'transfer' ? 'Transferencia' : categoryName(tx.categoryId)) }}</p>
+      <p class="text-muted truncate text-sm">
+        @if (tx.type === 'transfer') { {{ accountName(tx.accountId) }} → {{ accountName(tx.transferAccountId!) }} } @else { {{ accountName(tx.accountId) }} @if (categoryName(tx.categoryId)) { · {{
+        categoryName(tx.categoryId) }} } }
+      </p>
+    </div>
+
+    <div
+      class="w-36 flex-none text-right font-semibold"
+      [class]="tx.type === 'income' ? 'text-positive' : tx.type === 'expense' ? 'text-negative' : 'text-ink'">
+      {{ tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : '' }}{{ tx.amount | number: '1.0-0' }} {{ tx.currency }}
+    </div>
+
+    <div class="flex flex-none gap-2">
+      <button
+        type="button"
+        aria-label="Editar movimiento"
+        (click)="openEditForm(tx)"
+        class="border-border text-ink hover:border-ink rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-300">
+        Editar
+      </button>
+      <button
+        type="button"
+        aria-label="Eliminar movimiento"
+        (click)="deletingTransaction.set(tx)"
+        class="border-negative/30 text-negative hover:bg-negative-soft rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-300">
+        Eliminar
+      </button>
+    </div>
+  </div>
+  }
+</div>
+} @if (isFormOpen()) {
+<app-transaction-form
+  [transaction]="editingTransaction()"
+  (saved)="closeForm()"
+  (cancelled)="closeForm()" />
+} @if (deletingTransaction(); as tx) {
+<app-confirm-dialog
+  title="Eliminar movimiento"
+  message="¿Eliminar este movimiento? Esta acción no se puede deshacer."
+  (confirmed)="handleDeleteConfirmed()"
+  (cancelled)="deletingTransaction.set(null)" />
+}

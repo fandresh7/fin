@@ -28,8 +28,7 @@ export const routes: Routes = [
       },
       {
         path: 'movimientos',
-        loadComponent: () => import('./shared/components/coming-soon/coming-soon').then(m => m.ComingSoon),
-        data: { title: 'Movimientos' }
+        loadComponent: () => import('./features/transactions/transactions-page').then(m => m.TransactionsPage)
       },
       {
         path: 'cuentas',
