@@ -29,10 +29,10 @@
 } @else {
 <div class="border-border bg-surface mt-8 overflow-hidden rounded-[20px] border">
   @for (tx of transactionsService.transactions(); track tx.id) {
-  <div class="border-border flex items-center gap-4 border-b px-6 py-4 last:border-b-0">
-    <div class="text-muted w-24 flex-none text-sm">{{ tx.occurredAt }}</div>
+  <div class="border-border flex flex-col gap-3 border-b px-6 py-4 last:border-b-0 sm:flex-row sm:items-center sm:gap-4">
+    <div class="text-muted text-sm sm:w-24 sm:flex-none">{{ tx.occurredAt }}</div>
 
-    <div class="min-w-0 flex-1">
+    <div class="min-w-0 sm:flex-1">
       <p class="text-ink truncate font-medium">{{ tx.description || (tx.type === 'transfer' ? 'Transferencia' : categoryName(tx.categoryId)) }}</p>
       <p class="text-muted truncate text-sm">
         @if (tx.type === 'transfer') { {{ accountName(tx.accountId) }} → {{ accountName(tx.transferAccountId!) }} } @else { {{ accountName(tx.accountId) }} @if (categoryName(tx.categoryId)) { · {{
@@ -41,12 +41,12 @@
     </div>
 
     <div
-      class="w-36 flex-none text-right font-semibold"
+      class="text-left font-semibold sm:w-36 sm:flex-none sm:text-right"
       [class]="tx.type === 'income' ? 'text-positive' : tx.type === 'expense' ? 'text-negative' : 'text-ink'">
       {{ tx.type === 'income' ? '+' : tx.type === 'expense' ? '−' : '' }}{{ tx.amount | number: '1.0-0' }} {{ tx.currency }}
     </div>
 
-    <div class="flex flex-none gap-2">
+    <div class="flex gap-2 sm:flex-none">
       <button
         type="button"
         aria-label="Editar movimiento"
