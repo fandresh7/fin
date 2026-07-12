@@ -1,0 +1,83 @@
+<div class="flex items-center justify-between gap-4">
+  <div>
+    <h1 class="text-ink text-[28px] font-bold">Categorías</h1>
+    <p class="text-muted mt-1 text-sm">Organiza tus ingresos y gastos.</p>
+  </div>
+  <button
+    type="button"
+    (click)="openCreateForm()"
+    class="bg-primary hover:bg-primary-dark rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors duration-300">
+    + Nueva categoría
+  </button>
+</div>
+
+@if (categoriesService.isLoading() && categoriesService.categories().length === 0) {
+<p class="text-muted mt-10 text-sm">Cargando categorías…</p>
+} @else {
+<div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+  <div>
+    <h2 class="text-muted mb-3 text-[13px] font-semibold tracking-[0.08em] uppercase">Ingresos</h2>
+    <div class="border-border bg-surface overflow-hidden rounded-[20px] border">
+      @for (category of incomeCategories(); track category.id) {
+      <div class="border-border flex items-center justify-between gap-3 border-b px-5 py-3 last:border-b-0">
+        <span class="text-ink font-medium">{{ category.name }}</span>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            (click)="openEditForm(category)"
+            class="border-border text-ink hover:border-ink rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-300">
+            Editar
+          </button>
+          <button
+            type="button"
+            (click)="deletingCategory.set(category)"
+            class="border-negative/30 text-negative hover:bg-negative-soft rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-300">
+            Eliminar
+          </button>
+        </div>
+      </div>
+      } @empty {
+      <p class="text-muted px-5 py-4 text-sm">Sin categorías de ingreso todavía.</p>
+      }
+    </div>
+  </div>
+
+  <div>
+    <h2 class="text-muted mb-3 text-[13px] font-semibold tracking-[0.08em] uppercase">Gastos</h2>
+    <div class="border-border bg-surface overflow-hidden rounded-[20px] border">
+      @for (category of expenseCategories(); track category.id) {
+      <div class="border-border flex items-center justify-between gap-3 border-b px-5 py-3 last:border-b-0">
+        <span class="text-ink font-medium">{{ category.name }}</span>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            (click)="openEditForm(category)"
+            class="border-border text-ink hover:border-ink rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-300">
+            Editar
+          </button>
+          <button
+            type="button"
+            (click)="deletingCategory.set(category)"
+            class="border-negative/30 text-negative hover:bg-negative-soft rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-300">
+            Eliminar
+          </button>
+        </div>
+      </div>
+      } @empty {
+      <p class="text-muted px-5 py-4 text-sm">Sin categorías de gasto todavía.</p>
+      }
+    </div>
+  </div>
+</div>
+} @if (isFormOpen()) {
+<app-category-form
+  [category]="editingCategory()"
+  (saved)="closeForm()"
+  (cancelled)="closeForm()" />
+} @if (deletingCategory(); as category) {
+<app-confirm-dialog
+  title="Eliminar categoría"
+  [message]="'¿Eliminar ' + category.name + '? Los movimientos que la usaban quedarán sin categoría, no se borran.'"
+  (confirmed)="handleDeleteConfirmed()"
+  (cancelled)="deletingCategory.set(null)" />
+}

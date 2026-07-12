@@ -46,13 +46,11 @@ export const routes: Routes = [
       },
       {
         path: 'presupuestos',
-        loadComponent: () => import('./shared/components/coming-soon/coming-soon').then(m => m.ComingSoon),
-        data: { title: 'Presupuestos' }
+        loadComponent: () => import('./features/budgets/budgets-page').then(m => m.BudgetsPage)
       },
       {
         path: 'categorias',
-        loadComponent: () => import('./shared/components/coming-soon/coming-soon').then(m => m.ComingSoon),
-        data: { title: 'Categorías' }
+        loadComponent: () => import('./features/categories/categories-page').then(m => m.CategoriesPage)
       },
       {
         path: 'profile',

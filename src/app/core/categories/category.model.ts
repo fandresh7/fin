@@ -9,6 +9,11 @@ export interface Category {
   isArchived: boolean
 }
 
+export interface CategoryInput {
+  name: string
+  type: CategoryType
+}
+
 export interface CategoryRow {
   id: string
   name: string
