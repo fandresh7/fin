@@ -40,8 +40,7 @@ export const routes: Routes = [
       },
       {
         path: 'cripto',
-        loadComponent: () => import('./shared/components/coming-soon/coming-soon').then(m => m.ComingSoon),
-        data: { title: 'Cripto' }
+        loadComponent: () => import('./features/crypto/crypto-page').then(m => m.CryptoPage)
       },
       {
         path: 'presupuestos',
