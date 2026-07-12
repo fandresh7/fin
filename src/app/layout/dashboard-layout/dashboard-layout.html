@@ -1,0 +1,138 @@
+<div class="bg-paper min-h-screen">
+  <!-- Mobile backdrop -->
+  @if (isSidebarOpen()) {
+  <div
+    class="bg-ink/40 fixed inset-0 z-30 lg:hidden"
+    (click)="closeSidebar()"></div>
+  }
+
+  <!-- Sidebar -->
+  <aside
+    class="bg-ink fixed inset-y-0 left-0 z-40 flex w-72 flex-col transition-transform duration-300 ease-out lg:translate-x-0"
+    [class.translate-x-0]="isSidebarOpen()"
+    [class.-translate-x-full]="!isSidebarOpen()">
+    <div class="flex items-center justify-between px-7 py-7">
+      <div>
+        <span class="text-accent text-[13px] font-semibold tracking-[0.22em] uppercase">fin</span>
+        <p class="text-paper/55 mt-1 text-sm">Finanzas personales</p>
+      </div>
+      <button
+        type="button"
+        aria-label="Cerrar menú"
+        (click)="closeSidebar()"
+        class="text-paper/60 hover:text-paper rounded-full p-1.5 hover:bg-white/5 lg:hidden">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto px-4 pb-6">
+      <ul class="flex flex-col gap-1">
+        @for (item of navItems; track item.path) {
+        <li>
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="bg-primary text-white"
+            [routerLinkActiveOptions]="{ exact: true }"
+            (click)="closeSidebar()"
+            class="text-paper/65 hover:text-paper flex items-center gap-3 rounded-xl px-3.5 py-2.75 text-sm font-medium transition-colors duration-150 hover:bg-white/5">
+            <app-nav-icon [name]="item.icon" />
+            {{ item.label }}
+          </a>
+        </li>
+        }
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Content column -->
+  <div class="flex min-h-screen flex-col lg:pl-72">
+    <header class="border-border bg-surface sticky top-0 z-20 flex items-center justify-between border-b px-6 py-4 sm:px-8">
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          aria-label="Abrir menú"
+          (click)="toggleSidebar()"
+          class="text-ink hover:bg-primary-soft rounded-full p-2 transition-colors duration-150 lg:hidden">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
+        <span class="text-primary text-[13px] font-semibold tracking-[0.22em] uppercase lg:hidden">fin</span>
+      </div>
+
+      <button
+        type="button"
+        [cdkMenuTriggerFor]="userMenu"
+        class="border-border hover:bg-primary-soft flex items-center gap-2.5 rounded-full border py-1.5 pr-3 pl-1.5 transition-colors duration-150">
+        <span class="bg-primary flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white"> {{ userInitial() }} </span>
+        <span class="text-ink hidden max-w-[14ch] truncate text-sm font-medium sm:inline">{{ userEmail() }}</span>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="text-muted">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+
+      <ng-template #userMenu>
+        <div
+          cdkMenu
+          class="shadow-elevated border-border bg-surface w-52 rounded-2xl border p-1.5">
+          <a
+            cdkMenuItem
+            routerLink="/profile"
+            class="text-ink hover:bg-primary-soft flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium outline-none">
+            <app-nav-icon name="user" />
+            Ver perfil
+          </a>
+          <button
+            cdkMenuItem
+            type="button"
+            (click)="signOut()"
+            class="text-negative hover:bg-negative-soft flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium outline-none">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <path d="M16 17l5-5-5-5" />
+              <path d="M21 12H9" />
+            </svg>
+            Cerrar sesión
+          </button>
+        </div>
+      </ng-template>
+    </header>
+
+    <main class="flex-1 px-6 py-8 sm:px-8">
+      <router-outlet />
+    </main>
+  </div>
+</div>
