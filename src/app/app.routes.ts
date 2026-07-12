@@ -36,8 +36,7 @@ export const routes: Routes = [
       },
       {
         path: 'tarjetas',
-        loadComponent: () => import('./shared/components/coming-soon/coming-soon').then(m => m.ComingSoon),
-        data: { title: 'Tarjetas' }
+        loadComponent: () => import('./features/cards/cards-page').then(m => m.CardsPage)
       },
       {
         path: 'cripto',

@@ -1,0 +1,109 @@
+<div>
+  <h1 class="text-ink text-[28px] font-bold">Tarjetas</h1>
+  <p class="text-muted mt-1 text-sm">Ciclos de facturación de tus tarjetas de crédito.</p>
+</div>
+
+@if (accountsService.isLoading() && creditCardAccounts().length === 0) {
+<p class="text-muted mt-10 text-sm">Cargando tarjetas…</p>
+} @else if (creditCardAccounts().length === 0) {
+<div class="border-border bg-surface mt-10 flex flex-col items-center justify-center rounded-[22px] border border-dashed px-8 py-20 text-center">
+  <h2 class="text-ink text-lg font-bold">No tienes tarjetas de crédito</h2>
+  <p class="text-muted mt-2 max-w-[42ch] text-sm">Agrega una cuenta de tipo "Tarjeta de crédito" desde Cuentas para llevar sus ciclos aquí.</p>
+</div>
+} @else {
+<div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  @for (account of creditCardAccounts(); track account.id) {
+  <button
+    type="button"
+    (click)="selectAccount(account.id)"
+    [class]="
+          selectedAccountId() === account.id
+            ? 'rounded-[20px] border-2 border-primary bg-surface p-6 text-left transition-colors duration-200'
+            : 'rounded-[20px] border-2 border-border bg-surface p-6 text-left transition-colors duration-200 hover:border-ink'
+        ">
+    <p class="text-ink font-semibold">{{ account.name }}</p>
+    <p class="text-muted text-sm">{{ account.institution }}</p>
+    <p
+      class="mt-3 text-xl font-bold"
+      [class]="account.balance < 0 ? 'text-negative' : 'text-ink'">
+      {{ account.balance | number: '1.0-0' }} {{ account.currency }}
+    </p>
+    <p class="text-muted mt-1 text-xs">Cupo {{ account.creditLimit | number: '1.0-0' }} · corte {{ account.cutoffDay }} · pago {{ account.paymentDueDay }}</p>
+  </button>
+  }
+</div>
+
+@if (selectedAccountId(); as accountId) {
+<div class="mt-8">
+  <div class="flex items-center justify-between gap-4">
+    <h2 class="text-ink text-lg font-bold">Ciclos de {{ accountName(accountId) }}</h2>
+    <button
+      type="button"
+      (click)="isCreateFormOpen.set(true)"
+      class="bg-primary hover:bg-primary-dark rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-300">
+      + Nuevo ciclo
+    </button>
+  </div>
+
+  @if (statementsForSelectedAccount().length === 0) {
+  <p class="text-muted mt-4 text-sm">Todavía no hay ciclos registrados para esta tarjeta.</p>
+  } @else {
+  <div class="border-border bg-surface mt-4 overflow-hidden rounded-[20px] border">
+    @for (statement of statementsForSelectedAccount(); track statement.id) {
+    <div class="border-border flex items-center gap-4 border-b px-6 py-4 last:border-b-0">
+      <div class="text-ink w-52 flex-none text-sm whitespace-nowrap">{{ statement.periodStart }} → {{ statement.periodEnd }}</div>
+      <div class="text-muted w-28 flex-none text-sm">Pago {{ statement.dueDate }}</div>
+      <span
+        class="w-20 flex-none rounded-full px-2.5 py-1 text-center text-xs font-semibold"
+        [class]="
+                  statement.status === 'paid'
+                    ? 'bg-positive-soft text-positive'
+                    : statement.status === 'overdue'
+                      ? 'bg-negative-soft text-negative'
+                      : statement.status === 'closed'
+                        ? 'bg-primary-soft text-primary'
+                        : 'bg-paper text-muted'
+                ">
+        {{ statusLabels[statement.status] }}
+      </span>
+      <div class="text-ink flex-1 text-right text-sm">
+        {{ statement.totalAmount | number: '1.0-0' }}
+        <span class="text-muted">total</span>
+      </div>
+      <div class="text-muted w-32 flex-none text-right text-sm">{{ statement.paidAmount | number: '1.0-0' }} pagado</div>
+      <div class="flex flex-none gap-2">
+        <button
+          type="button"
+          (click)="editingStatement.set(statement)"
+          class="border-border text-ink hover:border-ink rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-300">
+          Editar
+        </button>
+        <button
+          type="button"
+          (click)="deletingStatement.set(statement)"
+          class="border-negative/30 text-negative hover:bg-negative-soft rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-300">
+          Eliminar
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>
+} } @if (isCreateFormOpen() && selectedAccountId(); as accountId) {
+<app-create-statement-form
+  [accountId]="accountId"
+  (saved)="closeCreateForm()"
+  (cancelled)="closeCreateForm()" />
+} @if (editingStatement(); as statement) {
+<app-edit-statement-form
+  [statement]="statement"
+  (saved)="editingStatement.set(null)"
+  (cancelled)="editingStatement.set(null)" />
+} @if (deletingStatement(); as statement) {
+<app-confirm-dialog
+  title="Eliminar ciclo"
+  message="¿Eliminar este ciclo de facturación? Los movimientos asociados quedarán sin ciclo, no se borran."
+  (confirmed)="handleDeleteConfirmed()"
+  (cancelled)="deletingStatement.set(null)" />
+}
