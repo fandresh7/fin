@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common'
 import { AccountsService } from '../../core/accounts/accounts.service'
 import { CategoriesService } from '../../core/categories/categories.service'
 import { Transaction } from '../../core/transactions/transaction.model'
-import { TransactionsService } from '../../core/transactions/transactions.service'
+import { TransactionFilters, TransactionsService } from '../../core/transactions/transactions.service'
 import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog'
 import { TransactionForm } from './transaction-form/transaction-form'
 
@@ -22,6 +22,12 @@ export class TransactionsPage {
   protected readonly deletingTransaction = signal<Transaction | null>(null)
   protected readonly isDeleting = signal(false)
 
+  protected readonly filterAccountId = signal('')
+  protected readonly filterCategoryId = signal('')
+  protected readonly filterStartDate = signal('')
+  protected readonly filterEndDate = signal('')
+  protected readonly hasActiveFilters = computed(() => !!(this.filterAccountId() || this.filterCategoryId() || this.filterStartDate() || this.filterEndDate()))
+
   protected readonly accountNameById = computed(() => new Map(this.accountsService.accounts().map(account => [account.id, account.name])))
   protected readonly categoryNameById = computed(() => new Map(this.categoriesService.categories().map(category => [category.id, category.name])))
 
@@ -38,6 +44,43 @@ export class TransactionsPage {
   protected categoryName(id: string | null): string | null {
     if (!id) return null
     return this.categoryNameById().get(id) ?? null
+  }
+
+  private currentFilters(): TransactionFilters {
+    return {
+      accountId: this.filterAccountId() || undefined,
+      categoryId: this.filterCategoryId() || undefined,
+      startDate: this.filterStartDate() || undefined,
+      endDate: this.filterEndDate() || undefined
+    }
+  }
+
+  protected handleAccountFilterChange(event: Event): void {
+    this.filterAccountId.set((event.target as HTMLSelectElement).value)
+    this.transactionsService.load(this.currentFilters())
+  }
+
+  protected handleCategoryFilterChange(event: Event): void {
+    this.filterCategoryId.set((event.target as HTMLSelectElement).value)
+    this.transactionsService.load(this.currentFilters())
+  }
+
+  protected handleStartDateFilterChange(event: Event): void {
+    this.filterStartDate.set((event.target as HTMLInputElement).value)
+    this.transactionsService.load(this.currentFilters())
+  }
+
+  protected handleEndDateFilterChange(event: Event): void {
+    this.filterEndDate.set((event.target as HTMLInputElement).value)
+    this.transactionsService.load(this.currentFilters())
+  }
+
+  protected clearFilters(): void {
+    this.filterAccountId.set('')
+    this.filterCategoryId.set('')
+    this.filterStartDate.set('')
+    this.filterEndDate.set('')
+    this.transactionsService.load({})
   }
 
   protected openCreateForm(): void {

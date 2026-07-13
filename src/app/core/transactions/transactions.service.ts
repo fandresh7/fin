@@ -36,6 +36,13 @@ function toRow(input: TransactionInput, userId: string) {
   }
 }
 
+export interface TransactionFilters {
+  accountId?: string
+  categoryId?: string
+  startDate?: string
+  endDate?: string
+}
+
 const RECENT_LIMIT = 200
 
 @Service()
@@ -46,16 +53,25 @@ export class TransactionsService {
   private readonly _transactions = signal<Transaction[]>([])
   private readonly _isLoading = signal(false)
   private readonly _error = signal<string | null>(null)
+  private _lastFilters: TransactionFilters = {}
 
   readonly transactions = this._transactions.asReadonly()
   readonly isLoading = this._isLoading.asReadonly()
   readonly error = this._error.asReadonly()
 
-  async load(): Promise<void> {
+  async load(filters: TransactionFilters = {}): Promise<void> {
     this._isLoading.set(true)
     this._error.set(null)
+    this._lastFilters = filters
 
-    const { data, error } = await this.supabase.from('transactions').select('*').order('occurred_at', { ascending: false }).order('created_at', { ascending: false }).limit(RECENT_LIMIT)
+    let query = this.supabase.from('transactions').select('*')
+
+    if (filters.accountId) query = query.eq('account_id', filters.accountId)
+    if (filters.categoryId) query = query.eq('category_id', filters.categoryId)
+    if (filters.startDate) query = query.gte('occurred_at', filters.startDate)
+    if (filters.endDate) query = query.lte('occurred_at', filters.endDate)
+
+    const { data, error } = await query.order('occurred_at', { ascending: false }).order('created_at', { ascending: false }).limit(RECENT_LIMIT)
 
     if (error) {
       this._error.set('No se pudieron cargar los movimientos.')
@@ -71,21 +87,20 @@ export class TransactionsService {
     const userId = this.auth.user()?.id
     if (!userId) throw new Error('No hay sesión activa')
 
-    const { data, error } = await this.supabase.from('transactions').insert(toRow(input, userId)).select().single()
+    const { error } = await this.supabase.from('transactions').insert(toRow(input, userId))
     if (error) throw error
 
-    this._transactions.update(list => [fromRow(data as TransactionRow), ...list])
+    await this.load(this._lastFilters)
   }
 
   async update(id: string, input: TransactionInput): Promise<void> {
     const userId = this.auth.user()?.id
     if (!userId) throw new Error('No hay sesión activa')
 
-    const { data, error } = await this.supabase.from('transactions').update(toRow(input, userId)).eq('id', id).select().single()
+    const { error } = await this.supabase.from('transactions').update(toRow(input, userId)).eq('id', id)
     if (error) throw error
 
-    const updated = fromRow(data as TransactionRow)
-    this._transactions.update(list => list.map(t => (t.id === id ? updated : t)))
+    await this.load(this._lastFilters)
   }
 
   async remove(id: string): Promise<void> {

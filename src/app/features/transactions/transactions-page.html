@@ -11,12 +11,77 @@
   </button>
 </div>
 
+<div class="border-border bg-surface mt-6 flex flex-wrap items-end gap-3 rounded-[20px] border p-4">
+  <label class="flex min-w-[9rem] flex-1 flex-col gap-1.5 sm:flex-none">
+    <span class="text-muted text-xs font-medium">Cuenta</span>
+    <select
+      [value]="filterAccountId()"
+      (change)="handleAccountFilterChange($event)"
+      class="border-border bg-paper text-ink focus:border-primary w-full rounded-lg border px-3 py-2 text-sm outline-none">
+      <option value="">Todas</option>
+      @for (account of accountsService.accounts(); track account.id) {
+      <option [value]="account.id">{{ account.name }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="flex min-w-[9rem] flex-1 flex-col gap-1.5 sm:flex-none">
+    <span class="text-muted text-xs font-medium">Categoría</span>
+    <select
+      [value]="filterCategoryId()"
+      (change)="handleCategoryFilterChange($event)"
+      class="border-border bg-paper text-ink focus:border-primary w-full rounded-lg border px-3 py-2 text-sm outline-none">
+      <option value="">Todas</option>
+      @for (category of categoriesService.categories(); track category.id) {
+      <option [value]="category.id">{{ category.name }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="flex min-w-[8rem] flex-1 flex-col gap-1.5 sm:flex-none">
+    <span class="text-muted text-xs font-medium">Desde</span>
+    <input
+      type="date"
+      [value]="filterStartDate()"
+      (change)="handleStartDateFilterChange($event)"
+      class="border-border bg-paper text-ink focus:border-primary w-full rounded-lg border px-3 py-2 text-sm outline-none" />
+  </label>
+
+  <label class="flex min-w-[8rem] flex-1 flex-col gap-1.5 sm:flex-none">
+    <span class="text-muted text-xs font-medium">Hasta</span>
+    <input
+      type="date"
+      [value]="filterEndDate()"
+      (change)="handleEndDateFilterChange($event)"
+      class="border-border bg-paper text-ink focus:border-primary w-full rounded-lg border px-3 py-2 text-sm outline-none" />
+  </label>
+
+  @if (hasActiveFilters()) {
+  <button
+    type="button"
+    (click)="clearFilters()"
+    class="border-border text-ink hover:border-ink rounded-full border px-4 py-2 text-sm font-semibold transition-colors duration-300">
+    Limpiar filtros
+  </button>
+  }
+</div>
+
 @if (transactionsService.isLoading() && transactionsService.transactions().length === 0) {
 <p class="text-muted mt-10 text-sm">Cargando movimientos…</p>
 } @else if (transactionsService.error()) {
 <p class="bg-negative-soft text-negative mt-10 rounded-lg px-4 py-3 text-sm">{{ transactionsService.error() }}</p>
 } @else if (transactionsService.transactions().length === 0) {
 <div class="border-border bg-surface mt-10 flex flex-col items-center justify-center rounded-[22px] border border-dashed px-8 py-20 text-center">
+  @if (hasActiveFilters()) {
+  <h2 class="text-ink text-lg font-bold">Sin movimientos con estos filtros</h2>
+  <p class="text-muted mt-2 max-w-[42ch] text-sm">Prueba ajustando o quitando alguno de los filtros.</p>
+  <button
+    type="button"
+    (click)="clearFilters()"
+    class="border-ink text-ink hover:bg-ink mt-6 rounded-full border px-6 py-3 text-sm font-semibold transition-colors duration-300 hover:text-white">
+    Limpiar filtros
+  </button>
+  } @else {
   <h2 class="text-ink text-lg font-bold">Todavía no tienes movimientos</h2>
   <p class="text-muted mt-2 max-w-[42ch] text-sm">Registra tu primer ingreso, gasto o transferencia.</p>
   <button
@@ -25,6 +90,7 @@
     class="bg-primary hover:bg-primary-dark mt-6 rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors duration-300">
     + Nuevo movimiento
   </button>
+  }
 </div>
 } @else {
 <div class="border-border bg-surface mt-8 overflow-hidden rounded-[20px] border">
