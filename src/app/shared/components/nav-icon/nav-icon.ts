@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core'
 
-export type NavIconName = 'home' | 'swap' | 'wallet' | 'card' | 'crypto' | 'budget' | 'tag' | 'user'
+export type NavIconName = 'home' | 'swap' | 'wallet' | 'card' | 'crypto' | 'budget' | 'tag' | 'user' | 'repeat'
 
 @Component({
   selector: 'app-nav-icon',
@@ -49,6 +49,10 @@ export type NavIconName = 'home' | 'swap' | 'wallet' | 'card' | 'crypto' | 'budg
         @case ('user') {
           <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
           <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
+        }
+        @case ('repeat') {
+          <path d="M4 12a8 8 0 0 1 13.6-5.66M20 12a8 8 0 0 1-13.6 5.66" />
+          <path d="M17.6 6.34V3m0 3.34H21M6.4 17.66V21m0-3.34H3" />
         }
       }
     </svg>

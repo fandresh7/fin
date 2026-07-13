@@ -22,6 +22,7 @@ export class DashboardLayout {
   protected readonly navItems: NavItem[] = [
     { label: 'Resumen', path: '/dashboard', icon: 'home' },
     { label: 'Movimientos', path: '/movimientos', icon: 'swap' },
+    { label: 'Recurrentes', path: '/recurrentes', icon: 'repeat' },
     { label: 'Cuentas', path: '/cuentas', icon: 'wallet' },
     { label: 'Tarjetas', path: '/tarjetas', icon: 'card' },
     { label: 'Cripto', path: '/cripto', icon: 'crypto' },
