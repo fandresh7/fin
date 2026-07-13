@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core'
 import { FormField, form, min, required, submit } from '@angular/forms/signals'
 import { AccountsService } from '../../../core/accounts/accounts.service'
+import { CardStatementsService } from '../../../core/card-statements/card-statements.service'
 import { CategoriesService } from '../../../core/categories/categories.service'
 import { Transaction, TransactionInput, TransactionType } from '../../../core/transactions/transaction.model'
 import { TransactionsService } from '../../../core/transactions/transactions.service'
@@ -13,6 +14,7 @@ interface TransactionFormModel {
   amount: number | null
   description: string
   occurredAt: string
+  cardStatementId: string
 }
 
 function todayIso(): string {
@@ -21,7 +23,7 @@ function todayIso(): string {
 
 function buildModel(transaction: Transaction | null, defaultAccountId: string): TransactionFormModel {
   if (!transaction) {
-    return { type: 'expense', accountId: defaultAccountId, transferAccountId: '', categoryId: '', amount: null, description: '', occurredAt: todayIso() }
+    return { type: 'expense', accountId: defaultAccountId, transferAccountId: '', categoryId: '', amount: null, description: '', occurredAt: todayIso(), cardStatementId: '' }
   }
 
   return {
@@ -31,7 +33,8 @@ function buildModel(transaction: Transaction | null, defaultAccountId: string): 
     categoryId: transaction.categoryId ?? '',
     amount: transaction.amount,
     description: transaction.description ?? '',
-    occurredAt: transaction.occurredAt
+    occurredAt: transaction.occurredAt,
+    cardStatementId: transaction.cardStatementId ?? ''
   }
 }
 
@@ -108,6 +111,20 @@ function buildModel(transaction: Transaction | null, defaultAccountId: string): 
             </label>
           }
 
+          @if (model().type === 'expense' && statementsForAccount().length > 0) {
+            <label class="flex flex-col gap-2">
+              <span class="text-muted text-sm font-medium">Ciclo de facturación (opcional)</span>
+              <select
+                [formField]="txForm.cardStatementId"
+                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
+                <option value="">Sin vincular</option>
+                @for (statement of statementsForAccount(); track statement.id) {
+                  <option [value]="statement.id">{{ statement.periodStart }} → {{ statement.periodEnd }}</option>
+                }
+              </select>
+            </label>
+          }
+
           <label class="flex flex-col gap-2">
             <span class="text-muted text-sm font-medium">Monto</span>
             <input
@@ -168,10 +185,15 @@ export class TransactionForm {
   private readonly transactionsService = inject(TransactionsService)
   protected readonly accountsService = inject(AccountsService)
   protected readonly categoriesService = inject(CategoriesService)
+  protected readonly cardStatementsService = inject(CardStatementsService)
 
   readonly transaction = input<Transaction | null>(null)
   readonly saved = output<void>()
   readonly cancelled = output<void>()
+
+  constructor() {
+    this.cardStatementsService.load()
+  }
 
   protected readonly typeOptions: { value: TransactionType; label: string }[] = [
     { value: 'expense', label: 'Gasto' },
@@ -193,6 +215,12 @@ export class TransactionForm {
     const type = this.model().type
     if (type === 'transfer') return []
     return this.categoriesService.categories().filter(category => category.type === type)
+  })
+
+  protected readonly statementsForAccount = computed(() => {
+    const account = this.accountsService.accounts().find(a => a.id === this.model().accountId)
+    if (!account || account.type !== 'credit_card') return []
+    return this.cardStatementsService.statements().filter(statement => statement.accountId === account.id)
   })
 
   protected readonly errorMessage = signal<string | null>(null)
@@ -219,6 +247,7 @@ export class TransactionForm {
       }
 
       const account = this.accountsService.accounts().find(a => a.id === current.accountId)
+      const isValidStatement = this.statementsForAccount().some(statement => statement.id === current.cardStatementId)
       const input: TransactionInput = {
         accountId: current.accountId,
         categoryId: current.type === 'transfer' ? null : current.categoryId,
@@ -227,7 +256,8 @@ export class TransactionForm {
         currency: account?.currency ?? 'COP',
         description: current.description,
         occurredAt: current.occurredAt,
-        transferAccountId: current.type === 'transfer' ? current.transferAccountId : null
+        transferAccountId: current.type === 'transfer' ? current.transferAccountId : null,
+        cardStatementId: current.type === 'expense' && isValidStatement ? current.cardStatementId : null
       }
 
       this.isSubmitting.set(true)

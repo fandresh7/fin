@@ -10,6 +10,7 @@ export interface Transaction {
   description: string | null
   occurredAt: string
   transferAccountId: string | null
+  cardStatementId: string | null
   createdAt: string
 }
 
@@ -22,6 +23,7 @@ export interface TransactionInput {
   description: string
   occurredAt: string
   transferAccountId: string | null
+  cardStatementId: string | null
 }
 
 export interface TransactionRow {
@@ -34,5 +36,6 @@ export interface TransactionRow {
   description: string | null
   occurred_at: string
   transfer_account_id: string | null
+  card_statement_id: string | null
   created_at: string
 }

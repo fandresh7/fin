@@ -14,6 +14,7 @@ function fromRow(row: TransactionRow): Transaction {
     description: row.description,
     occurredAt: row.occurred_at,
     transferAccountId: row.transfer_account_id,
+    cardStatementId: row.card_statement_id,
     createdAt: row.created_at
   }
 }
@@ -30,7 +31,8 @@ function toRow(input: TransactionInput, userId: string) {
     currency: input.currency,
     description: input.description || null,
     occurred_at: input.occurredAt,
-    transfer_account_id: isTransfer ? input.transferAccountId : null
+    transfer_account_id: isTransfer ? input.transferAccountId : null,
+    card_statement_id: input.type === 'expense' ? input.cardStatementId : null
   }
 }
 
