@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core'
+import { Component, computed, inject, input, linkedSignal, output, signal, untracked } from '@angular/core'
 import { FormField, form, min, required, submit } from '@angular/forms/signals'
 import { AccountsService } from '../../../core/accounts/accounts.service'
 import { CardStatementsService } from '../../../core/card-statements/card-statements.service'
@@ -201,7 +201,11 @@ export class TransactionForm {
     { value: 'transfer', label: 'Transferencia' }
   ]
 
-  protected readonly model = signal<TransactionFormModel>(buildModel(this.transaction(), this.accountsService.accounts()[0]?.id ?? ''))
+  // linkedSignal, not signal + eager buildModel: reading an @Input in a field initializer sees
+  // its default, not what the parent bound, since Angular sets real input values after
+  // construction. The accounts list read is untracked so an unrelated background refresh of
+  // that list can't reset the form and discard whatever the user has typed so far.
+  protected readonly model = linkedSignal<TransactionFormModel>(() => buildModel(this.transaction(), untracked(() => this.accountsService.accounts())[0]?.id ?? ''))
   protected readonly txForm = form(this.model, path => {
     required(path.accountId, { message: 'Selecciona una cuenta' })
     required(path.amount, { message: 'El monto es obligatorio' })

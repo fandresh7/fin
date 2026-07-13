@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core'
+import { Component, inject, input, linkedSignal, output, signal } from '@angular/core'
 import { FormField, form, required, submit } from '@angular/forms/signals'
 import { CardStatementInput } from '../../../core/card-statements/card-statement.model'
 import { CardStatementsService } from '../../../core/card-statements/card-statements.service'
@@ -78,7 +78,7 @@ export class CreateStatementForm {
   readonly saved = output<void>()
   readonly cancelled = output<void>()
 
-  protected readonly model = signal<CardStatementInput>(buildModel(this.accountId()))
+  protected readonly model = linkedSignal<CardStatementInput>(() => buildModel(this.accountId()))
   protected readonly statementForm = form(this.model, path => {
     required(path.periodStart, { message: 'La fecha de corte anterior es obligatoria' })
     required(path.periodEnd, { message: 'La fecha de corte actual es obligatoria' })

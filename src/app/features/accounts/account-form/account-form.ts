@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core'
+import { Component, inject, input, linkedSignal, output, signal } from '@angular/core'
 import { FormField, form, max, min, required, submit } from '@angular/forms/signals'
 import { Account, AccountInput, AccountType, ACCOUNT_TYPE_LABELS } from '../../../core/accounts/account.model'
 import { AccountsService } from '../../../core/accounts/accounts.service'
@@ -146,7 +146,10 @@ export class AccountForm {
   protected readonly currencies = CURRENCIES
   protected readonly typeLabels = ACCOUNT_TYPE_LABELS
 
-  protected readonly model = signal<AccountInput>(buildModel(this.account()))
+  // linkedSignal (not signal + eager buildModel call) because the model must be derived lazily:
+  // reading an @Input signal inside a field initializer sees its default, not the value the
+  // parent actually bound, since Angular only assigns real input values after construction.
+  protected readonly model = linkedSignal<AccountInput>(() => buildModel(this.account()))
   protected readonly accountForm = form(this.model, path => {
     required(path.name, { message: 'El nombre es obligatorio' })
     min(path.creditLimit, 0, { message: 'El cupo no puede ser negativo' })

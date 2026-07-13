@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core'
+import { Component, computed, inject, input, linkedSignal, output, signal, untracked } from '@angular/core'
 import { FormField, form, min, required, submit } from '@angular/forms/signals'
 import { AccountsService } from '../../../core/accounts/accounts.service'
 import { CryptoTransaction, CryptoTransactionInput, CryptoTransactionType, CRYPTO_TRANSACTION_TYPE_LABELS } from '../../../core/crypto/crypto.model'
@@ -164,7 +164,7 @@ export class CryptoTransactionForm {
   protected readonly fiatCurrencies = FIAT_CURRENCIES
   protected readonly cryptoAccounts = computed(() => this.accountsService.accounts().filter(account => account.type === 'crypto_exchange'))
 
-  protected readonly model = signal<CryptoTransactionInput>(buildModel(this.transaction(), this.accountsService.accounts().find(a => a.type === 'crypto_exchange')?.id ?? ''))
+  protected readonly model = linkedSignal<CryptoTransactionInput>(() => buildModel(this.transaction(), untracked(() => this.accountsService.accounts()).find(a => a.type === 'crypto_exchange')?.id ?? ''))
   protected readonly txForm = form(this.model, path => {
     required(path.accountId, { message: 'Selecciona una cuenta' })
     required(path.assetSymbol, { message: 'Ingresa el símbolo del activo' })

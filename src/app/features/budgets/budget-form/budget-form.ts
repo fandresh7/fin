@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core'
+import { Component, inject, input, linkedSignal, output, signal } from '@angular/core'
 import { FormField, form, min, required, submit } from '@angular/forms/signals'
 import { CategoriesService } from '../../../core/categories/categories.service'
 import { Budget, BudgetInput } from '../../../core/budgets/budget.model'
@@ -129,7 +129,7 @@ export class BudgetForm {
   readonly saved = output<void>()
   readonly cancelled = output<void>()
 
-  protected readonly model = signal<BudgetInput>(buildModel(this.budget()))
+  protected readonly model = linkedSignal<BudgetInput>(() => buildModel(this.budget()))
   protected readonly budgetForm = form(this.model, path => {
     required(path.categoryId, { message: 'Selecciona una categoría' })
     required(path.amount, { message: 'El monto es obligatorio' })

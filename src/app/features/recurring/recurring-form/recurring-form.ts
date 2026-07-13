@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core'
+import { Component, computed, inject, input, linkedSignal, output, signal, untracked } from '@angular/core'
 import { FormField, form, min, required, submit } from '@angular/forms/signals'
 import { AccountsService } from '../../../core/accounts/accounts.service'
 import { CategoriesService } from '../../../core/categories/categories.service'
@@ -244,7 +244,7 @@ export class RecurringForm {
     { value: 'custom', label: 'Personalizada' }
   ]
 
-  protected readonly model = signal<RecurringFormModel>(buildModel(this.rule(), this.accountsService.accounts()[0]?.id ?? ''))
+  protected readonly model = linkedSignal<RecurringFormModel>(() => buildModel(this.rule(), untracked(() => this.accountsService.accounts())[0]?.id ?? ''))
   protected readonly recurringForm = form(this.model, path => {
     required(path.accountId, { message: 'Selecciona una cuenta' })
     required(path.categoryId, { message: 'Selecciona una categoría' })

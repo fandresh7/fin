@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core'
+import { Component, inject, input, linkedSignal, output, signal } from '@angular/core'
 import { FormField, form, required, submit } from '@angular/forms/signals'
 import { Category, CategoryInput, CategoryType } from '../../../core/categories/category.model'
 import { CategoriesService } from '../../../core/categories/categories.service'
@@ -89,7 +89,7 @@ export class CategoryForm {
     { value: 'income', label: 'Ingreso' }
   ]
 
-  protected readonly model = signal<CategoryInput>(buildModel(this.category()))
+  protected readonly model = linkedSignal<CategoryInput>(() => buildModel(this.category()))
   protected readonly categoryForm = form(this.model, path => {
     required(path.name, { message: 'El nombre es obligatorio' })
   })

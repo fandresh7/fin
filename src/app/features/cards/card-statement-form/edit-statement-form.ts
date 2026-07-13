@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core'
+import { Component, inject, input, linkedSignal, output, signal } from '@angular/core'
 import { DecimalPipe } from '@angular/common'
 import { FormField, form, min, submit } from '@angular/forms/signals'
 import { CardStatement, CardStatementStatus, CardStatementUpdateInput, CARD_STATEMENT_STATUS_LABELS } from '../../../core/card-statements/card-statement.model'
@@ -92,7 +92,7 @@ export class EditStatementForm {
   protected readonly statuses = STATUSES
   protected readonly statusLabels = CARD_STATEMENT_STATUS_LABELS
 
-  protected readonly model = signal<CardStatementUpdateInput>({ status: this.statement().status, paidAmount: this.statement().paidAmount })
+  protected readonly model = linkedSignal<CardStatementUpdateInput>(() => ({ status: this.statement().status, paidAmount: this.statement().paidAmount }))
   protected readonly statementForm = form(this.model, path => {
     min(path.paidAmount, 0, { message: 'El monto pagado no puede ser negativo' })
   })
