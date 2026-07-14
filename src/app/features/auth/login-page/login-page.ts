@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core'
 import { email, form, FormField, required, submit } from '@angular/forms/signals'
 import { Router, RouterLink } from '@angular/router'
 import { AuthService } from '../../../core/auth/auth.service'
+import { PasswordToggle } from '../../../shared/components/password-toggle/password-toggle'
 
 interface LoginModel {
   email: string
@@ -10,7 +11,7 @@ interface LoginModel {
 
 @Component({
   selector: 'app-login-page',
-  imports: [FormField, RouterLink],
+  imports: [FormField, RouterLink, PasswordToggle],
   template: `
     <div class="bg-paper flex min-h-screen items-center justify-center px-6 py-12">
       <div class="shadow-elevated border-border bg-surface w-full max-w-md rounded-[22px] border p-8 sm:p-11">
@@ -36,11 +37,16 @@ interface LoginModel {
 
           <label class="flex flex-col gap-2">
             <span class="text-muted text-sm font-medium">Contraseña</span>
-            <input
-              type="password"
-              autocomplete="current-password"
-              [formField]="loginForm.password"
-              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 font-sans text-base outline-none" />
+            <div class="border-border bg-paper focus-within:border-primary focus-within:bg-surface flex w-full items-center rounded-xl border pr-3">
+              <input
+                [type]="showPassword() ? 'text' : 'password'"
+                autocomplete="current-password"
+                [formField]="loginForm.password"
+                class="text-ink w-full rounded-xl bg-transparent px-4 py-3.5 font-sans text-base outline-none" />
+              <app-password-toggle
+                [visible]="showPassword()"
+                (toggled)="showPassword.set(!showPassword())" />
+            </div>
             @if (loginForm.password().touched() && loginForm.password().invalid()) {
               <span class="text-negative text-sm">La contraseña es obligatoria.</span>
             }
@@ -82,6 +88,7 @@ export class LoginPage {
 
   protected readonly errorMessage = signal<string | null>(null)
   protected readonly isSubmitting = signal(false)
+  protected readonly showPassword = signal(false)
 
   protected handleSubmit(event: Event): void {
     event.preventDefault()

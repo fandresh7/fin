@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core'
 import { form, FormField, minLength, required, submit } from '@angular/forms/signals'
 import { RouterLink } from '@angular/router'
 import { AuthService } from '../../../core/auth/auth.service'
+import { PasswordToggle } from '../../../shared/components/password-toggle/password-toggle'
 
 interface ResetPasswordModel {
   password: string
@@ -10,7 +11,7 @@ interface ResetPasswordModel {
 
 @Component({
   selector: 'app-reset-password-page',
-  imports: [FormField, RouterLink],
+  imports: [FormField, RouterLink, PasswordToggle],
   template: `
     <div class="bg-paper flex min-h-screen items-center justify-center px-6 py-12">
       <div class="shadow-elevated border-border bg-surface w-full max-w-md rounded-[22px] border p-8 sm:p-11">
@@ -32,11 +33,16 @@ interface ResetPasswordModel {
             (submit)="handleSubmit($event)">
             <label class="flex flex-col gap-2">
               <span class="text-muted text-sm font-medium">Nueva contraseña</span>
-              <input
-                type="password"
-                autocomplete="new-password"
-                [formField]="resetForm.password"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 font-sans text-base outline-none" />
+              <div class="border-border bg-paper focus-within:border-primary focus-within:bg-surface flex w-full items-center rounded-xl border pr-3">
+                <input
+                  [type]="showPassword() ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  [formField]="resetForm.password"
+                  class="text-ink w-full rounded-xl bg-transparent px-4 py-3.5 font-sans text-base outline-none" />
+                <app-password-toggle
+                  [visible]="showPassword()"
+                  (toggled)="showPassword.set(!showPassword())" />
+              </div>
               @if (resetForm.password().touched() && resetForm.password().invalid()) {
                 <span class="text-negative text-sm">Mínimo 8 caracteres.</span>
               }
@@ -44,11 +50,16 @@ interface ResetPasswordModel {
 
             <label class="flex flex-col gap-2">
               <span class="text-muted text-sm font-medium">Confirma la contraseña</span>
-              <input
-                type="password"
-                autocomplete="new-password"
-                [formField]="resetForm.confirmPassword"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 font-sans text-base outline-none" />
+              <div class="border-border bg-paper focus-within:border-primary focus-within:bg-surface flex w-full items-center rounded-xl border pr-3">
+                <input
+                  [type]="showConfirmPassword() ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  [formField]="resetForm.confirmPassword"
+                  class="text-ink w-full rounded-xl bg-transparent px-4 py-3.5 font-sans text-base outline-none" />
+                <app-password-toggle
+                  [visible]="showConfirmPassword()"
+                  (toggled)="showConfirmPassword.set(!showConfirmPassword())" />
+              </div>
             </label>
 
             @if (errorMessage()) {
@@ -80,6 +91,8 @@ export class ResetPasswordPage {
   protected readonly errorMessage = signal<string | null>(null)
   protected readonly successMessage = signal<string | null>(null)
   protected readonly isSubmitting = signal(false)
+  protected readonly showPassword = signal(false)
+  protected readonly showConfirmPassword = signal(false)
 
   protected handleSubmit(event: Event): void {
     event.preventDefault()
