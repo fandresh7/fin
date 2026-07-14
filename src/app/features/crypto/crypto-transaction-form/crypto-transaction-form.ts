@@ -25,7 +25,7 @@ function buildModel(tx: CryptoTransaction | null, defaultAccountId: string): Cry
     fiatCurrency: tx.fiatCurrency ?? 'COP',
     fee: tx.fee,
     notes: tx.notes ?? '',
-    occurredAt: tx.occurredAt.slice(0, 10)
+    occurredAt: tx.occurredAt
   }
 }
 

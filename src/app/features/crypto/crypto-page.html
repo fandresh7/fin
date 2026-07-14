@@ -11,7 +11,7 @@
   <p class="text-muted mt-2 max-w-[42ch] text-sm">Agrega una cuenta de tipo "Exchange cripto" desde Cuentas para llevar sus holdings aquí.</p>
 </div>
 } @else {
-<div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
   @for (account of cryptoAccounts(); track account.id) {
   <button
     type="button"
@@ -35,9 +35,9 @@
   } @else {
   <div class="mt-3 flex flex-wrap gap-3">
     @for (holding of holdingsForSelectedAccount(); track holding.assetSymbol) {
-    <div class="border-border bg-surface rounded-2xl border px-5 py-3">
-      <p class="text-muted text-sm">{{ holding.assetSymbol }}</p>
-      <p class="text-ink text-lg font-bold">{{ holding.quantity }}</p>
+    <div class="border-border bg-surface min-w-[7rem] rounded-2xl border px-5 py-3">
+      <p class="text-muted text-xs font-semibold tracking-wide uppercase">{{ holding.assetSymbol }}</p>
+      <p class="text-ink mt-1 text-lg font-bold">{{ holding.quantity | number: '1.0-8' }}</p>
     </div>
     }
   </div>
@@ -58,14 +58,25 @@
   } @else {
   <div class="border-border bg-surface mt-4 overflow-hidden rounded-[20px] border">
     @for (tx of transactionsForSelectedAccount(); track tx.id) {
-    <div class="border-border flex items-center gap-4 border-b px-6 py-4 last:border-b-0">
-      <div class="text-muted w-24 flex-none text-sm">{{ tx.occurredAt }}</div>
-      <div class="text-ink w-32 flex-none text-sm font-medium">{{ typeLabels[tx.type] }}</div>
-      <div class="text-ink flex-1 text-sm">{{ tx.quantity }} {{ tx.assetSymbol }}</div>
-      @if (tx.pricePerUnit) {
-      <div class="text-muted w-40 flex-none text-right text-sm">{{ tx.pricePerUnit }} {{ tx.fiatCurrency }}/u</div>
-      }
-      <div class="flex flex-none gap-2">
+    <div class="border-border flex flex-col gap-3 border-b px-6 py-4 last:border-b-0 sm:flex-row sm:items-center sm:gap-4">
+      <div class="text-muted text-sm sm:w-24 sm:flex-none">{{ tx.occurredAt }}</div>
+
+      <div class="min-w-0 sm:flex-1">
+        <p class="text-ink font-medium">{{ typeLabels[tx.type] }}</p>
+        @if (tx.notes) {
+        <p class="text-muted truncate text-sm">{{ tx.notes }}</p>
+        }
+      </div>
+
+      <div
+        class="text-left font-semibold sm:w-44 sm:flex-none sm:text-right"
+        [class]="isIncreasing(tx.type) ? 'text-positive' : 'text-negative'">
+        {{ isIncreasing(tx.type) ? '+' : '−' }}{{ tx.quantity | number: '1.0-8' }} {{ tx.assetSymbol }}
+      </div>
+
+      <div class="text-muted text-sm sm:w-48 sm:flex-none sm:text-right">@if (tx.pricePerUnit) { {{ tx.pricePerUnit | number: '1.0-0' }} {{ tx.fiatCurrency }}/u }</div>
+
+      <div class="flex gap-2 sm:flex-none">
         <button
           type="button"
           (click)="openEditForm(tx)"

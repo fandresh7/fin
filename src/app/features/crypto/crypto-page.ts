@@ -1,13 +1,17 @@
 import { Component, computed, inject, signal } from '@angular/core'
+import { DecimalPipe } from '@angular/common'
 import { AccountsService } from '../../core/accounts/accounts.service'
-import { CryptoTransaction, CRYPTO_TRANSACTION_TYPE_LABELS } from '../../core/crypto/crypto.model'
+import { CryptoTransaction, CryptoTransactionType, CRYPTO_TRANSACTION_TYPE_LABELS } from '../../core/crypto/crypto.model'
 import { CryptoService } from '../../core/crypto/crypto.service'
 import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog'
 import { CryptoTransactionForm } from './crypto-transaction-form/crypto-transaction-form'
 
+// Mirrors the DB trigger in crypto.sql: these types add to the holding, the rest subtract.
+const INCREASING_TYPES: ReadonlySet<CryptoTransactionType> = new Set(['buy', 'deposit', 'swap_in'])
+
 @Component({
   selector: 'app-crypto-page',
-  imports: [CryptoTransactionForm, ConfirmDialog],
+  imports: [CryptoTransactionForm, ConfirmDialog, DecimalPipe],
   templateUrl: './crypto-page.html'
 })
 export class CryptoPage {
@@ -19,7 +23,13 @@ export class CryptoPage {
   protected readonly cryptoAccounts = computed(() => this.accountsService.accounts().filter(account => account.type === 'crypto_exchange'))
   protected readonly selectedAccountId = signal<string | null>(null)
 
-  protected readonly holdingsForSelectedAccount = computed(() => this.cryptoService.holdings().filter(holding => holding.accountId === this.selectedAccountId()))
+  protected readonly holdingsForSelectedAccount = computed(() =>
+    this.cryptoService
+      .holdings()
+      .filter(holding => holding.accountId === this.selectedAccountId())
+      .slice()
+      .sort((a, b) => b.quantity - a.quantity)
+  )
   protected readonly transactionsForSelectedAccount = computed(() => this.cryptoService.transactions().filter(tx => tx.accountId === this.selectedAccountId()))
 
   protected readonly isFormOpen = signal(false)
@@ -34,6 +44,10 @@ export class CryptoPage {
 
   protected accountName(id: string): string {
     return this.accountsService.accounts().find(account => account.id === id)?.name ?? '—'
+  }
+
+  protected isIncreasing(type: CryptoTransactionType): boolean {
+    return INCREASING_TYPES.has(type)
   }
 
   protected selectAccount(accountId: string): void {
