@@ -58,8 +58,8 @@
   } @else {
   <div class="border-border bg-surface mt-4 overflow-hidden rounded-[20px] border">
     @for (tx of transactionsForSelectedAccount(); track tx.id) {
-    <div class="border-border flex flex-col gap-3 border-b px-6 py-4 last:border-b-0 sm:flex-row sm:items-center sm:gap-4">
-      <div class="text-muted text-sm sm:w-24 sm:flex-none">{{ tx.occurredAt }}</div>
+    <div class="border-border flex flex-col gap-3 border-b px-6 py-4 last:border-b-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+      <div class="text-muted text-sm sm:w-24 sm:flex-none">{{ tx.occurredAt | date: 'yyyy-MM-dd' : 'UTC' }}</div>
 
       <div class="min-w-0 sm:flex-1">
         <p class="text-ink font-medium">{{ typeLabels[tx.type] }}</p>
@@ -76,7 +76,7 @@
 
       <div class="text-muted text-sm sm:w-48 sm:flex-none sm:text-right">@if (tx.pricePerUnit) { {{ tx.pricePerUnit | number: '1.0-0' }} {{ tx.fiatCurrency }}/u }</div>
 
-      <div class="flex gap-2 sm:flex-none">
+      <div class="flex gap-2 sm:ml-auto sm:flex-none">
         <button
           type="button"
           (click)="openEditForm(tx)"

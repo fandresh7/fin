@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core'
-import { DecimalPipe } from '@angular/common'
+import { DatePipe, DecimalPipe } from '@angular/common'
 import { AccountsService } from '../../core/accounts/accounts.service'
 import { CryptoTransaction, CryptoTransactionType, CRYPTO_TRANSACTION_TYPE_LABELS } from '../../core/crypto/crypto.model'
 import { CryptoService } from '../../core/crypto/crypto.service'
@@ -11,7 +11,7 @@ const INCREASING_TYPES: ReadonlySet<CryptoTransactionType> = new Set(['buy', 'de
 
 @Component({
   selector: 'app-crypto-page',
-  imports: [CryptoTransactionForm, ConfirmDialog, DecimalPipe],
+  imports: [CryptoTransactionForm, ConfirmDialog, DecimalPipe, DatePipe],
   templateUrl: './crypto-page.html'
 })
 export class CryptoPage {
