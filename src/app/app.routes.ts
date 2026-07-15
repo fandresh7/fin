@@ -55,6 +55,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/categories/categories-page').then(m => m.CategoriesPage)
       },
       {
+        path: 'patrimonio',
+        loadComponent: () => import('./features/patrimonio/patrimonio-page').then(m => m.PatrimonioPage)
+      },
+      {
         path: 'profile',
         loadComponent: () => import('./features/profile/profile-page').then(m => m.ProfilePage)
       }

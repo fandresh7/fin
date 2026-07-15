@@ -27,7 +27,8 @@ export class DashboardLayout {
     { label: 'Tarjetas', path: '/tarjetas', icon: 'card' },
     { label: 'Cripto', path: '/cripto', icon: 'crypto' },
     { label: 'Presupuestos', path: '/presupuestos', icon: 'budget' },
-    { label: 'Categorías', path: '/categorias', icon: 'tag' }
+    { label: 'Categorías', path: '/categorias', icon: 'tag' },
+    { label: 'Patrimonio', path: '/patrimonio', icon: 'gem' }
   ]
 
   protected readonly isSidebarOpen = signal(false)
