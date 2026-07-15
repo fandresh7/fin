@@ -41,6 +41,35 @@ export function formatFrequency(unit: RecurrenceIntervalUnit, count: number): st
   return `Cada ${count} ${UNIT_LABELS[unit].plural}`
 }
 
+export interface CatchUpResult {
+  pendingDates: string[]
+  nextRunDate: string
+  isActive: boolean
+}
+
+function advanceDate(dateIso: string, unit: RecurrenceIntervalUnit, count: number): string {
+  const date = new Date(`${dateIso}T00:00:00Z`)
+  if (unit === 'day') date.setUTCDate(date.getUTCDate() + count)
+  else if (unit === 'week') date.setUTCDate(date.getUTCDate() + count * 7)
+  else date.setUTCMonth(date.getUTCMonth() + count)
+  return date.toISOString().slice(0, 10)
+}
+
+// Mirrors generate_recurring_transactions() in the DB: walks from startDate through today (bounded
+// by endDate) collecting every occurrence that's already due, so the UI can offer to backfill them
+// instead of silently skipping to a single catch-up run on the next cron pass.
+export function computeCatchUp(startDate: string, intervalUnit: RecurrenceIntervalUnit, intervalCount: number, endDate: string | null, todayIso: string): CatchUpResult {
+  const pendingDates: string[] = []
+  let current = startDate
+
+  while (current <= todayIso && (!endDate || current <= endDate)) {
+    pendingDates.push(current)
+    current = advanceDate(current, intervalUnit, intervalCount)
+  }
+
+  return { pendingDates, nextRunDate: current, isActive: !endDate || current <= endDate }
+}
+
 export interface RecurringTransactionRow {
   id: string
   account_id: string

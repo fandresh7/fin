@@ -50,7 +50,7 @@ export class RecurringTransactionsService {
     this._isLoading.set(false)
   }
 
-  async create(input: RecurringTransactionInput): Promise<void> {
+  async create(input: RecurringTransactionInput): Promise<RecurringTransaction> {
     const userId = this.auth.user()?.id
     if (!userId) throw new Error('No hay sesión activa')
 
@@ -74,7 +74,9 @@ export class RecurringTransactionsService {
       .single()
     if (error) throw error
 
-    this._rules.update(list => [...list, fromRow(data as RecurringTransactionRow)].sort((a, b) => a.nextRunDate.localeCompare(b.nextRunDate)))
+    const created = fromRow(data as RecurringTransactionRow)
+    this._rules.update(list => [...list, created].sort((a, b) => a.nextRunDate.localeCompare(b.nextRunDate)))
+    return created
   }
 
   // Deliberately leaves next_run_date untouched — the schedule's current position is owned by
@@ -101,6 +103,15 @@ export class RecurringTransactionsService {
 
     const updated = fromRow(data as RecurringTransactionRow)
     this._rules.update(list => list.map(rule => (rule.id === id ? updated : rule)).sort((a, b) => a.nextRunDate.localeCompare(b.nextRunDate)))
+  }
+
+  // Used after backfilling missed occurrences from the UI: pushes next_run_date past the dates
+  // the user already resolved (created or explicitly skipped) so the nightly cron doesn't refire them.
+  async catchUp(id: string, nextRunDate: string, isActive: boolean): Promise<void> {
+    const { error } = await this.supabase.from('recurring_transactions').update({ next_run_date: nextRunDate, last_run_at: new Date().toISOString(), is_active: isActive }).eq('id', id)
+    if (error) throw error
+
+    this._rules.update(list => list.map(rule => (rule.id === id ? { ...rule, nextRunDate, isActive } : rule)).sort((a, b) => a.nextRunDate.localeCompare(b.nextRunDate)))
   }
 
   async setActive(id: string, isActive: boolean): Promise<void> {
