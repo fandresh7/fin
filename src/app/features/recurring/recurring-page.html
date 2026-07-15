@@ -6,8 +6,14 @@
   <button
     type="button"
     (click)="openCreateForm()"
-    class="bg-primary hover:bg-primary-dark rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors duration-300">
-    + Nuevo recurrente
+    aria-label="Nuevo recurrente"
+    class="bg-primary hover:bg-primary-dark shrink-0 rounded-full px-4 py-3 text-sm font-semibold whitespace-nowrap text-white transition-colors duration-300 sm:px-6">
+    <span
+      class="sm:hidden"
+      aria-hidden="true"
+      >+</span
+    >
+    <span class="hidden sm:inline">+ Nuevo recurrente</span>
   </button>
 </div>
 
@@ -22,7 +28,7 @@
   <button
     type="button"
     (click)="openCreateForm()"
-    class="bg-primary hover:bg-primary-dark mt-6 rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors duration-300">
+    class="bg-primary hover:bg-primary-dark mt-6 rounded-full px-6 py-3 text-sm font-semibold whitespace-nowrap text-white transition-colors duration-300">
     + Nuevo recurrente
   </button>
 </div>
@@ -30,40 +36,40 @@
 <div class="border-border bg-surface mt-8 overflow-hidden rounded-[20px] border">
   @for (rule of recurringService.rules(); track rule.id) {
   <div
-    class="border-border flex flex-col gap-3 border-b px-6 py-4 last:border-b-0 sm:flex-row sm:items-center sm:gap-4"
+    class="border-border flex flex-col gap-3 border-b px-6 py-4 last:border-b-0 lg:flex-row lg:items-center lg:gap-4"
     [class.opacity-50]="!rule.isActive">
-    <div class="min-w-0 sm:flex-1">
+    <div class="min-w-0 lg:flex-1">
       <p class="text-ink truncate font-medium">{{ rule.description || categoryName(rule.categoryId) }}</p>
       <p class="text-muted truncate text-sm">{{ accountName(rule.accountId) }} · {{ categoryName(rule.categoryId) }}</p>
     </div>
 
-    <div class="text-muted text-sm sm:w-32 sm:flex-none">{{ formatFrequency(rule.intervalUnit, rule.intervalCount) }}</div>
+    <div class="text-muted text-sm lg:w-32 lg:flex-none">{{ formatFrequency(rule.intervalUnit, rule.intervalCount) }}</div>
 
-    <div class="text-muted text-sm sm:w-36 sm:flex-none">@if (rule.isActive) { Próxima: {{ rule.nextRunDate }} } @else { Pausado }</div>
+    <div class="text-muted text-sm lg:w-36 lg:flex-none">@if (rule.isActive) { Próxima: {{ rule.nextRunDate }} } @else { Pausado }</div>
 
     <div
-      class="text-left font-semibold sm:w-36 sm:flex-none sm:text-right"
+      class="text-left font-semibold lg:w-36 lg:flex-none lg:text-right"
       [class]="rule.type === 'income' ? 'text-positive' : 'text-negative'">
       {{ rule.type === 'income' ? '+' : '−' }}{{ rule.amount | number: '1.0-0' }} {{ rule.currency }}
     </div>
 
-    <div class="flex flex-wrap gap-2 sm:flex-none">
+    <div class="flex flex-wrap gap-2 lg:flex-none">
       <button
         type="button"
         (click)="toggleActive(rule)"
-        class="border-border text-ink hover:border-ink rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-300">
+        class="border-border text-ink hover:border-ink rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors duration-300">
         {{ rule.isActive ? 'Pausar' : 'Activar' }}
       </button>
       <button
         type="button"
         (click)="openEditForm(rule)"
-        class="border-border text-ink hover:border-ink rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-300">
+        class="border-border text-ink hover:border-ink rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors duration-300">
         Editar
       </button>
       <button
         type="button"
         (click)="deletingRule.set(rule)"
-        class="border-negative/30 text-negative hover:bg-negative-soft rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-300">
+        class="border-negative/30 text-negative hover:bg-negative-soft rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors duration-300">
         Eliminar
       </button>
     </div>
