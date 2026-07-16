@@ -2,9 +2,9 @@ import { Component, inject, input, linkedSignal, output, signal } from '@angular
 import { FormField, form, min, required, submit } from '@angular/forms/signals'
 import { Asset, AssetCategory, AssetInput, ASSET_CATEGORY_LABELS } from '../../../core/assets/asset.model'
 import { AssetsService } from '../../../core/assets/assets.service'
+import { CURRENCIES } from '../../../shared/currencies'
 
 const CATEGORIES = Object.keys(ASSET_CATEGORY_LABELS) as AssetCategory[]
-const CURRENCIES = ['COP', 'USD', 'USDT']
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10)

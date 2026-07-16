@@ -2,9 +2,9 @@ import { Component, inject, input, linkedSignal, output, signal } from '@angular
 import { FormField, form, max, min, required, submit } from '@angular/forms/signals'
 import { Account, AccountInput, AccountType, ACCOUNT_TYPE_LABELS } from '../../../core/accounts/account.model'
 import { AccountsService } from '../../../core/accounts/accounts.service'
+import { CURRENCIES } from '../../../shared/currencies'
 
 const ACCOUNT_TYPES = Object.keys(ACCOUNT_TYPE_LABELS) as AccountType[]
-const CURRENCIES = ['COP', 'USD', 'USDT']
 
 function buildModel(account: Account | null): AccountInput {
   if (!account) {

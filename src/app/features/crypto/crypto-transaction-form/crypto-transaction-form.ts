@@ -3,9 +3,9 @@ import { FormField, form, min, required, submit } from '@angular/forms/signals'
 import { AccountsService } from '../../../core/accounts/accounts.service'
 import { CryptoTransaction, CryptoTransactionInput, CryptoTransactionType, CRYPTO_TRANSACTION_TYPE_LABELS } from '../../../core/crypto/crypto.model'
 import { CryptoService } from '../../../core/crypto/crypto.service'
+import { CURRENCIES as FIAT_CURRENCIES } from '../../../shared/currencies'
 
 const TYPES = Object.keys(CRYPTO_TRANSACTION_TYPE_LABELS) as CryptoTransactionType[]
-const FIAT_CURRENCIES = ['COP', 'USD', 'USDT']
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10)

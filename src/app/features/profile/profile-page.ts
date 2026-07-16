@@ -1,13 +1,12 @@
 import { Component, inject, linkedSignal, signal } from '@angular/core'
 import { FormField, form, submit } from '@angular/forms/signals'
 import { AuthService } from '../../core/auth/auth.service'
+import { CURRENCIES } from '../../shared/currencies'
 
 interface ProfileFormModel {
   displayName: string
   defaultCurrency: string
 }
-
-const CURRENCIES = ['COP', 'USD', 'USDT']
 
 @Component({
   selector: 'app-profile-page',
