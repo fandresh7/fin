@@ -52,5 +52,11 @@ export class ProfilesService {
     if (error) throw error
 
     this._profile.set(fromRow(data as ProfileRow))
+
+    // Mirrors the name into the session's user_metadata so it's available synchronously on the
+    // next page load (from getSession(), no extra round trip) instead of flashing the email
+    // first while this table's own load() is still in flight.
+    const { error: metadataError } = await this.supabase.auth.updateUser({ data: { full_name: input.displayName || null } })
+    if (metadataError) throw metadataError
   }
 }

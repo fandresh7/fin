@@ -1,4 +1,4 @@
-import { Component, inject, linkedSignal, signal } from '@angular/core'
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core'
 import { FormField, form, submit } from '@angular/forms/signals'
 import { AuthService } from '../../core/auth/auth.service'
 import { Profile, ProfileInput } from '../../core/profiles/profile.model'
@@ -16,7 +16,7 @@ function buildModel(profile: Profile | null): ProfileInput {
   template: `
     <div class="shadow-elevated border-border bg-surface max-w-xl rounded-[22px] border p-8 sm:p-11">
       <span class="text-primary text-[13px] font-semibold tracking-[0.22em] uppercase">Perfil</span>
-      <h1 class="text-ink mt-3 text-[28px] font-bold">{{ profilesService.profile()?.displayName || auth.user()?.email }}</h1>
+      <h1 class="text-ink mt-3 text-[28px] font-bold">{{ displayName() }}</h1>
       <p class="text-muted mt-2 text-sm">{{ auth.user()?.email }}</p>
 
       <form
@@ -65,6 +65,10 @@ export class ProfilePage {
   protected readonly profilesService = inject(ProfilesService)
 
   protected readonly currencies = CURRENCIES
+
+  // user_metadata comes with the session (no extra request), so it renders on the first paint
+  // instead of flashing the email while profilesService's own table fetch is still in flight.
+  protected readonly displayName = computed(() => (this.auth.user()?.user_metadata?.['full_name'] as string | undefined) || this.profilesService.profile()?.displayName || this.auth.user()?.email)
 
   protected readonly model = linkedSignal<ProfileInput>(() => buildModel(this.profilesService.profile()))
   protected readonly profileForm = form(this.model)

@@ -35,7 +35,9 @@ export class DashboardLayout {
 
   protected readonly isSidebarOpen = signal(false)
   protected readonly userEmail = computed(() => this.auth.user()?.email ?? '')
-  protected readonly userDisplayName = computed(() => this.profilesService.profile()?.displayName || this.userEmail())
+  // user_metadata comes with the session (no extra request), so it renders on the first paint
+  // instead of flashing the email while profilesService's own table fetch is still in flight.
+  protected readonly userDisplayName = computed(() => (this.auth.user()?.user_metadata?.['full_name'] as string | undefined) || this.profilesService.profile()?.displayName || this.userEmail())
   protected readonly userInitial = computed(() => this.userDisplayName().charAt(0).toUpperCase() || '?')
 
   constructor() {
