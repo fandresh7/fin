@@ -2,7 +2,6 @@ import { Component, computed, inject, signal } from '@angular/core'
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu'
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router'
 import { AuthService } from '../../core/auth/auth.service'
-import { ProfilesService } from '../../core/profiles/profiles.service'
 import { NavIcon, NavIconName } from '../../shared/components/nav-icon/nav-icon'
 
 interface NavItem {
@@ -19,7 +18,6 @@ interface NavItem {
 export class DashboardLayout {
   private readonly auth = inject(AuthService)
   private readonly router = inject(Router)
-  private readonly profilesService = inject(ProfilesService)
 
   protected readonly navItems: NavItem[] = [
     { label: 'Resumen', path: '/dashboard', icon: 'home' },
@@ -35,14 +33,8 @@ export class DashboardLayout {
 
   protected readonly isSidebarOpen = signal(false)
   protected readonly userEmail = computed(() => this.auth.user()?.email ?? '')
-  // user_metadata comes with the session (no extra request), so it renders on the first paint
-  // instead of flashing the email while profilesService's own table fetch is still in flight.
-  protected readonly userDisplayName = computed(() => (this.auth.user()?.user_metadata?.['full_name'] as string | undefined) || this.profilesService.profile()?.displayName || this.userEmail())
+  protected readonly userDisplayName = computed(() => this.auth.displayName() || this.userEmail())
   protected readonly userInitial = computed(() => this.userDisplayName().charAt(0).toUpperCase() || '?')
-
-  constructor() {
-    this.profilesService.load()
-  }
 
   protected toggleSidebar(): void {
     this.isSidebarOpen.update(open => !open)

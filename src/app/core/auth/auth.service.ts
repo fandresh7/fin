@@ -16,6 +16,11 @@ export class AuthService {
   readonly user = computed<User | null>(() => this._session()?.user ?? null)
   readonly isAuthenticated = computed(() => this._session() !== null)
 
+  // Stored in auth user_metadata rather than a separate profiles table: it comes with the
+  // session itself (no extra query, no loading state, no flicker on reload).
+  readonly displayName = computed(() => (this.user()?.user_metadata?.['full_name'] as string | undefined) || null)
+  readonly defaultCurrency = computed(() => (this.user()?.user_metadata?.['default_currency'] as string | undefined) || 'COP')
+
   constructor() {
     this.supabase.auth.getSession().then(({ data }) => {
       this._session.set(data.session)
@@ -47,6 +52,11 @@ export class AuthService {
 
   async updatePassword(newPassword: string): Promise<void> {
     const { error } = await this.supabase.auth.updateUser({ password: newPassword })
+    if (error) throw error
+  }
+
+  async updateProfile(input: { displayName: string; defaultCurrency: string }): Promise<void> {
+    const { error } = await this.supabase.auth.updateUser({ data: { full_name: input.displayName || null, default_currency: input.defaultCurrency } })
     if (error) throw error
   }
 }

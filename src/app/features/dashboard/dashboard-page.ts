@@ -1,6 +1,5 @@
 import { Component, computed, inject } from '@angular/core'
 import { AuthService } from '../../core/auth/auth.service'
-import { ProfilesService } from '../../core/profiles/profiles.service'
 
 @Component({
   selector: 'app-dashboard-page',
@@ -11,13 +10,6 @@ import { ProfilesService } from '../../core/profiles/profiles.service'
 })
 export class DashboardPage {
   protected readonly auth = inject(AuthService)
-  protected readonly profilesService = inject(ProfilesService)
 
-  // user_metadata comes with the session (no extra request), so it renders on the first paint
-  // instead of flashing the email while profilesService's own table fetch is still in flight.
-  protected readonly displayName = computed(() => (this.auth.user()?.user_metadata?.['full_name'] as string | undefined) || this.profilesService.profile()?.displayName || this.auth.user()?.email)
-
-  constructor() {
-    this.profilesService.load()
-  }
+  protected readonly displayName = computed(() => this.auth.displayName() || this.auth.user()?.email)
 }
