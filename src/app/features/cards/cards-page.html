@@ -40,8 +40,14 @@
     <button
       type="button"
       (click)="isCreateFormOpen.set(true)"
-      class="bg-primary hover:bg-primary-dark rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-300">
-      + Nuevo ciclo
+      aria-label="Nuevo ciclo"
+      class="bg-primary hover:bg-primary-dark shrink-0 rounded-full px-3 py-2.5 text-sm font-semibold whitespace-nowrap text-white transition-colors duration-300 sm:px-5">
+      <span
+        class="sm:hidden"
+        aria-hidden="true"
+        >+</span
+      >
+      <span class="hidden sm:inline">+ Nuevo ciclo</span>
     </button>
   </div>
 

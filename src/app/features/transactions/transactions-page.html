@@ -6,8 +6,14 @@
   <button
     type="button"
     (click)="openCreateForm()"
-    class="bg-primary hover:bg-primary-dark rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors duration-300">
-    + Nuevo movimiento
+    aria-label="Nuevo movimiento"
+    class="bg-primary hover:bg-primary-dark shrink-0 rounded-full px-4 py-3 text-sm font-semibold whitespace-nowrap text-white transition-colors duration-300 sm:px-6">
+    <span
+      class="sm:hidden"
+      aria-hidden="true"
+      >+</span
+    >
+    <span class="hidden sm:inline">+ Nuevo movimiento</span>
   </button>
 </div>
 
