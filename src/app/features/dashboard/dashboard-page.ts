@@ -48,7 +48,10 @@ export class DashboardPage {
       totals.set(asset.currency, (totals.get(asset.currency) ?? 0) + asset.currentValue)
     }
 
-    return [...totals.entries()].map(([currency, total]) => ({ currency, total })).sort((a, b) => b.total - a.total)
+    return [...totals.entries()]
+      .filter(([, total]) => total !== 0)
+      .map(([currency, total]) => ({ currency, total }))
+      .sort((a, b) => b.total - a.total)
   })
 
   protected readonly currentBudgets = computed<Budget[]>(() => {
