@@ -20,6 +20,18 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
+function sumByCurrency(entries: { currency: string; amount: number }[]): CurrencyTotal[] {
+  const totals = new Map<string, number>()
+  for (const entry of entries) {
+    totals.set(entry.currency, (totals.get(entry.currency) ?? 0) + entry.amount)
+  }
+
+  return [...totals.entries()]
+    .filter(([, total]) => total !== 0)
+    .map(([currency, total]) => ({ currency, total }))
+    .sort((a, b) => b.total - a.total)
+}
+
 @Component({
   selector: 'app-dashboard-page',
   imports: [RouterLink, DecimalPipe],
@@ -37,22 +49,16 @@ export class DashboardPage {
 
   // Crypto exchange accounts have no fiat currency (their value lives in crypto_holdings, not
   // a single balance), so they're excluded here the same way Cuentas excludes them from balances.
-  protected readonly netWorthByCurrency = computed<CurrencyTotal[]>(() => {
-    const totals = new Map<string, number>()
+  protected readonly balanceByCurrency = computed<CurrencyTotal[]>(() =>
+    sumByCurrency(
+      this.accountsService
+        .accounts()
+        .filter(account => account.currency)
+        .map(account => ({ currency: account.currency as string, amount: account.balance }))
+    )
+  )
 
-    for (const account of this.accountsService.accounts()) {
-      if (!account.currency) continue
-      totals.set(account.currency, (totals.get(account.currency) ?? 0) + account.balance)
-    }
-    for (const asset of this.assetsService.assets()) {
-      totals.set(asset.currency, (totals.get(asset.currency) ?? 0) + asset.currentValue)
-    }
-
-    return [...totals.entries()]
-      .filter(([, total]) => total !== 0)
-      .map(([currency, total]) => ({ currency, total }))
-      .sort((a, b) => b.total - a.total)
-  })
+  protected readonly patrimonioByCurrency = computed<CurrencyTotal[]>(() => sumByCurrency(this.assetsService.assets().map(asset => ({ currency: asset.currency, amount: asset.currentValue }))))
 
   protected readonly currentBudgets = computed<Budget[]>(() => {
     const today = todayIso()
