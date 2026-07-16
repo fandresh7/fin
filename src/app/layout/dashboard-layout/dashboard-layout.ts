@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core'
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu'
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router'
 import { AuthService } from '../../core/auth/auth.service'
+import { ProfilesService } from '../../core/profiles/profiles.service'
 import { NavIcon, NavIconName } from '../../shared/components/nav-icon/nav-icon'
 
 interface NavItem {
@@ -18,6 +19,7 @@ interface NavItem {
 export class DashboardLayout {
   private readonly auth = inject(AuthService)
   private readonly router = inject(Router)
+  private readonly profilesService = inject(ProfilesService)
 
   protected readonly navItems: NavItem[] = [
     { label: 'Resumen', path: '/dashboard', icon: 'home' },
@@ -33,7 +35,12 @@ export class DashboardLayout {
 
   protected readonly isSidebarOpen = signal(false)
   protected readonly userEmail = computed(() => this.auth.user()?.email ?? '')
-  protected readonly userInitial = computed(() => this.userEmail().charAt(0).toUpperCase() || '?')
+  protected readonly userDisplayName = computed(() => this.profilesService.profile()?.displayName || this.userEmail())
+  protected readonly userInitial = computed(() => this.userDisplayName().charAt(0).toUpperCase() || '?')
+
+  constructor() {
+    this.profilesService.load()
+  }
 
   protected toggleSidebar(): void {
     this.isSidebarOpen.update(open => !open)
