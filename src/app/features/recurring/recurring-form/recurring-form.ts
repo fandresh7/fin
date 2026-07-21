@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, output, signal, untracked } from '@angular/core'
 import { DecimalPipe } from '@angular/common'
 import { FormField, form, min, required, submit } from '@angular/forms/signals'
+import { Modal } from '../../../shared/components/modal/modal'
 import { AccountsService } from '../../../core/accounts/accounts.service'
 import { CategoriesService } from '../../../core/categories/categories.service'
 import { computeCatchUp, RecurrenceIntervalUnit, RecurringTransaction, RecurringTransactionInput, RecurringTransactionType } from '../../../core/recurring-transactions/recurring-transaction.model'
@@ -74,207 +75,202 @@ function buildModel(rule: RecurringTransaction | null, defaultAccountId: string)
 
 @Component({
   selector: 'app-recurring-form',
-  imports: [FormField, DecimalPipe],
+  imports: [FormField, DecimalPipe, Modal],
   template: `
-    <div
-      class="bg-ink/40 fixed inset-0 z-50 flex justify-end"
-      (click)="handleBackdropClick()">
-      <div
-        class="shadow-elevated bg-surface flex h-full w-full max-w-md flex-col overflow-y-auto p-8"
-        (click)="$event.stopPropagation()">
-        @if (pendingOccurrences(); as occurrences) {
-          <span class="text-primary text-[13px] font-semibold tracking-[0.22em] uppercase">Movimientos pendientes</span>
-          <h1 class="text-ink mt-2 text-[26px] font-bold">¿Agregamos lo que ya deberías tener registrado?</h1>
-          <p class="text-muted mt-2 text-sm">
-            Desde la primera fecha hasta hoy, esta regla ya generaría {{ occurrences.length === 1 ? 'este movimiento' : 'estos movimientos' }}. Elige cuáles quieres agregar a Movimientos.
-          </p>
+    <app-modal
+      [title]="pendingOccurrences() ? '¿Agregamos lo que ya deberías tener registrado?' : rule() ? 'Editar' : 'Se repite automáticamente'"
+      [eyebrow]="pendingOccurrences() ? 'Movimientos pendientes' : rule() ? 'Editar recurrente' : 'Nuevo movimiento recurrente'"
+      (closed)="handleBackdropClick()">
+      @if (pendingOccurrences(); as occurrences) {
+        <p class="text-muted text-sm">Desde la primera fecha hasta hoy, esta regla ya generaría {{ occurrences.length === 1 ? 'este movimiento' : 'estos movimientos' }}. Elige cuáles quieres agregar a Movimientos.</p>
 
-          <div class="mt-6 flex flex-1 flex-col gap-2">
-            @for (occurrence of occurrences; track occurrence.date) {
-              <label class="border-border flex items-center gap-3 rounded-xl border px-4 py-3.5">
-                <input
-                  type="checkbox"
-                  [checked]="occurrence.selected"
-                  (change)="toggleOccurrence(occurrence.date)"
-                  class="accent-primary h-4 w-4" />
-                <span class="text-ink text-sm font-medium">{{ occurrence.date }}</span>
-                <span
-                  class="ml-auto text-sm font-semibold"
-                  [class]="model().type === 'income' ? 'text-positive' : 'text-negative'">
-                  {{ model().type === 'income' ? '+' : '−' }}{{ model().amount | number: '1.0-0' }} {{ selectedAccountCurrency() }}
-                </span>
-              </label>
+        <div class="mt-6 flex flex-col gap-2">
+          @for (occurrence of occurrences; track occurrence.date) {
+            <label class="border-border flex items-center gap-3 rounded-xl border px-4 py-3.5">
+              <input
+                type="checkbox"
+                [checked]="occurrence.selected"
+                (change)="toggleOccurrence(occurrence.date)"
+                class="accent-primary h-4 w-4" />
+              <span class="text-ink text-sm font-medium">{{ occurrence.date }}</span>
+              <span
+                class="ml-auto text-sm font-semibold"
+                [class]="model().type === 'income' ? 'text-positive' : 'text-negative'">
+                {{ model().type === 'income' ? '+' : '−' }}{{ model().amount | number: '1.0-0' }} {{ selectedAccountCurrency() }}
+              </span>
+            </label>
+          }
+        </div>
+
+        @if (errorMessage()) {
+          <p class="bg-negative-soft text-negative mt-4 rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
+        }
+      } @else {
+        <form
+          id="recurringForm"
+          class="flex flex-col gap-5"
+          novalidate
+          (submit)="handleSubmit($event)">
+          <div class="bg-paper flex gap-2 rounded-full p-1">
+            @for (option of typeOptions; track option.value) {
+              <button
+                type="button"
+                (click)="setType(option.value)"
+                [class]="
+                  model().type === option.value
+                    ? 'bg-primary flex-1 rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200'
+                    : 'text-muted hover:text-ink flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200'
+                ">
+                {{ option.label }}
+              </button>
             }
           </div>
 
-          @if (errorMessage()) {
-            <p class="bg-negative-soft text-negative mt-4 rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
-          }
+          <label class="flex flex-col gap-2">
+            <span class="text-muted text-sm font-medium">Cuenta</span>
+            <select
+              [formField]="recurringForm.accountId"
+              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
+              <option value="">Selecciona una cuenta</option>
+              @for (account of accountsService.accounts(); track account.id) {
+                <option [value]="account.id">{{ account.name }}</option>
+              }
+            </select>
+          </label>
 
-          <div class="mt-auto flex gap-3 pt-6">
-            <button
-              type="button"
-              [disabled]="isProcessingOccurrences()"
-              (click)="skipOccurrences()"
-              class="border-ink text-ink hover:bg-ink flex-1 rounded-full border px-6 py-3.5 text-base font-semibold transition-colors duration-300 hover:text-white disabled:opacity-60">
-              Omitir
-            </button>
-            <button
-              type="button"
-              [disabled]="isProcessingOccurrences()"
-              (click)="confirmOccurrences()"
-              class="bg-primary hover:bg-primary-dark flex-1 rounded-full px-6 py-3.5 text-base font-semibold text-white transition-colors duration-300 disabled:opacity-60">
-              {{ isProcessingOccurrences() ? 'Agregando…' : 'Agregar seleccionados' }}
-            </button>
-          </div>
-        } @else {
-          <span class="text-primary text-[13px] font-semibold tracking-[0.22em] uppercase">{{ rule() ? 'Editar recurrente' : 'Nuevo movimiento recurrente' }}</span>
-          <h1 class="text-ink mt-2 text-[26px] font-bold">{{ rule() ? 'Editar' : 'Se repite automáticamente' }}</h1>
+          <label class="flex flex-col gap-2">
+            <span class="text-muted text-sm font-medium">Categoría</span>
+            <select
+              [formField]="recurringForm.categoryId"
+              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
+              <option value="">Selecciona una categoría</option>
+              @for (category of categoriesForType(); track category.id) {
+                <option [value]="category.id">{{ category.name }}</option>
+              }
+            </select>
+          </label>
 
-          <form
-            class="mt-8 flex flex-1 flex-col gap-5"
-            novalidate
-            (submit)="handleSubmit($event)">
-            <div class="bg-paper flex gap-2 rounded-full p-1">
-              @for (option of typeOptions; track option.value) {
+          <label class="flex flex-col gap-2">
+            <span class="text-muted text-sm font-medium">Monto</span>
+            <input
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              [formField]="recurringForm.amount"
+              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+            @if (recurringForm.amount().touched() && recurringForm.amount().invalid()) {
+              <span class="text-negative text-sm">Ingresa un monto mayor a cero.</span>
+            }
+          </label>
+
+          <label class="flex flex-col gap-2">
+            <span class="text-muted text-sm font-medium">Descripción (opcional)</span>
+            <input
+              type="text"
+              placeholder="Salario, arriendo…"
+              [formField]="recurringForm.description"
+              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+          </label>
+
+          <div class="flex flex-col gap-2">
+            <span class="text-muted text-sm font-medium">Frecuencia</span>
+            <div class="grid grid-cols-2 gap-2">
+              @for (option of presetOptions; track option.value) {
                 <button
                   type="button"
-                  (click)="setType(option.value)"
+                  (click)="setPreset(option.value)"
                   [class]="
-                    model().type === option.value
-                      ? 'bg-primary flex-1 rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200'
-                      : 'text-muted hover:text-ink flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200'
+                    model().preset === option.value
+                      ? 'bg-primary rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-200'
+                      : 'border-border text-ink hover:border-ink rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors duration-200'
                   ">
                   {{ option.label }}
                 </button>
               }
             </div>
+          </div>
 
-            <label class="flex flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Cuenta</span>
-              <select
-                [formField]="recurringForm.accountId"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
-                <option value="">Selecciona una cuenta</option>
-                @for (account of accountsService.accounts(); track account.id) {
-                  <option [value]="account.id">{{ account.name }}</option>
-                }
-              </select>
-            </label>
-
-            <label class="flex flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Categoría</span>
-              <select
-                [formField]="recurringForm.categoryId"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
-                <option value="">Selecciona una categoría</option>
-                @for (category of categoriesForType(); track category.id) {
-                  <option [value]="category.id">{{ category.name }}</option>
-                }
-              </select>
-            </label>
-
-            <label class="flex flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Monto</span>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                [formField]="recurringForm.amount"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
-              @if (recurringForm.amount().touched() && recurringForm.amount().invalid()) {
-                <span class="text-negative text-sm">Ingresa un monto mayor a cero.</span>
-              }
-            </label>
-
-            <label class="flex flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Descripción (opcional)</span>
-              <input
-                type="text"
-                placeholder="Salario, arriendo…"
-                [formField]="recurringForm.description"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
-            </label>
-
-            <div class="flex flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Frecuencia</span>
-              <div class="grid grid-cols-2 gap-2">
-                @for (option of presetOptions; track option.value) {
-                  <button
-                    type="button"
-                    (click)="setPreset(option.value)"
-                    [class]="
-                      model().preset === option.value
-                        ? 'bg-primary rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-200'
-                        : 'border-border text-ink hover:border-ink rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors duration-200'
-                    ">
-                    {{ option.label }}
-                  </button>
-                }
-              </div>
-            </div>
-
-            @if (model().preset === 'custom') {
-              <div class="flex items-end gap-3">
-                <label class="flex flex-col gap-2">
-                  <span class="text-muted text-sm font-medium">Cada</span>
-                  <input
-                    type="number"
-                    [formField]="recurringForm.intervalCount"
-                    class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-24 rounded-xl border px-4 py-3.5 text-base outline-none" />
-                </label>
-                <label class="flex flex-1 flex-col gap-2">
-                  <span class="text-muted text-sm font-medium">&nbsp;</span>
-                  <select
-                    [formField]="recurringForm.intervalUnit"
-                    class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
-                    <option value="day">Días</option>
-                    <option value="week">Semanas</option>
-                    <option value="month">Meses</option>
-                  </select>
-                </label>
-              </div>
-            }
-
-            <div class="flex gap-4">
-              <label class="flex flex-1 flex-col gap-2">
-                <span class="text-muted text-sm font-medium">Primera vez</span>
+          @if (model().preset === 'custom') {
+            <div class="flex items-end gap-3">
+              <label class="flex flex-col gap-2">
+                <span class="text-muted text-sm font-medium">Cada</span>
                 <input
-                  type="date"
-                  [formField]="recurringForm.startDate"
-                  class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+                  type="number"
+                  [formField]="recurringForm.intervalCount"
+                  class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-24 rounded-xl border px-4 py-3.5 text-base outline-none" />
               </label>
               <label class="flex flex-1 flex-col gap-2">
-                <span class="text-muted text-sm font-medium">Hasta (opcional)</span>
-                <input
-                  type="date"
-                  [formField]="recurringForm.endDate"
-                  class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+                <span class="text-muted text-sm font-medium">&nbsp;</span>
+                <select
+                  [formField]="recurringForm.intervalUnit"
+                  class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
+                  <option value="day">Días</option>
+                  <option value="week">Semanas</option>
+                  <option value="month">Meses</option>
+                </select>
               </label>
             </div>
+          }
 
-            @if (errorMessage()) {
-              <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
-            }
+          <div class="flex gap-4">
+            <label class="flex flex-1 flex-col gap-2">
+              <span class="text-muted text-sm font-medium">Primera vez</span>
+              <input
+                type="date"
+                [formField]="recurringForm.startDate"
+                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+            </label>
+            <label class="flex flex-1 flex-col gap-2">
+              <span class="text-muted text-sm font-medium">Hasta (opcional)</span>
+              <input
+                type="date"
+                [formField]="recurringForm.endDate"
+                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+            </label>
+          </div>
 
-            <div class="mt-auto flex gap-3 pt-6">
-              <button
-                type="button"
-                (click)="cancelled.emit()"
-                class="border-ink text-ink hover:bg-ink flex-1 rounded-full border px-6 py-3.5 text-base font-semibold transition-colors duration-300 hover:text-white">
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                [disabled]="isSubmitting()"
-                class="bg-primary hover:bg-primary-dark flex-1 rounded-full px-6 py-3.5 text-base font-semibold text-white transition-colors duration-300 disabled:opacity-60">
-                {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
-              </button>
-            </div>
-          </form>
-        }
-      </div>
-    </div>
+          @if (errorMessage()) {
+            <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
+          }
+        </form>
+      }
+
+      <button
+        ngProjectAs="[modal-footer]"
+        [hidden]="!pendingOccurrences()"
+        type="button"
+        [disabled]="isProcessingOccurrences()"
+        (click)="skipOccurrences()"
+        class="border-ink text-ink hover:bg-ink flex-1 rounded-full border px-6 py-3.5 text-base font-semibold transition-colors duration-300 hover:text-white disabled:opacity-60">
+        Omitir
+      </button>
+      <button
+        ngProjectAs="[modal-footer]"
+        [hidden]="!pendingOccurrences()"
+        type="button"
+        [disabled]="isProcessingOccurrences()"
+        (click)="confirmOccurrences()"
+        class="bg-primary hover:bg-primary-dark flex-1 rounded-full px-6 py-3.5 text-base font-semibold text-white transition-colors duration-300 disabled:opacity-60">
+        {{ isProcessingOccurrences() ? 'Agregando…' : 'Agregar seleccionados' }}
+      </button>
+      <button
+        ngProjectAs="[modal-footer]"
+        [hidden]="pendingOccurrences()"
+        type="button"
+        (click)="cancelled.emit()"
+        class="border-ink text-ink hover:bg-ink flex-1 rounded-full border px-6 py-3.5 text-base font-semibold transition-colors duration-300 hover:text-white">
+        Cancelar
+      </button>
+      <button
+        ngProjectAs="[modal-footer]"
+        [hidden]="pendingOccurrences()"
+        type="submit"
+        form="recurringForm"
+        [disabled]="isSubmitting()"
+        class="bg-primary hover:bg-primary-dark flex-1 rounded-full px-6 py-3.5 text-base font-semibold text-white transition-colors duration-300 disabled:opacity-60">
+        {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
+      </button>
+    </app-modal>
   `
 })
 export class RecurringForm {

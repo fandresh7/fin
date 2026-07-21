@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, linkedSignal, output, signal, untracked } from '@angular/core'
 import { FormField, form, min, required, submit } from '@angular/forms/signals'
+import { Modal } from '../../../shared/components/modal/modal'
 import { AccountsService } from '../../../core/accounts/accounts.service'
 import { CryptoTransaction, CryptoTransactionInput, CryptoTransactionType, CRYPTO_TRANSACTION_TYPE_LABELS } from '../../../core/crypto/crypto.model'
 import { CryptoService } from '../../../core/crypto/crypto.service'
@@ -31,124 +32,119 @@ function buildModel(tx: CryptoTransaction | null, defaultAccountId: string): Cry
 
 @Component({
   selector: 'app-crypto-transaction-form',
-  imports: [FormField],
+  imports: [FormField, Modal],
   template: `
-    <div
-      class="bg-ink/40 fixed inset-0 z-50 flex justify-end"
-      (click)="cancelled.emit()">
-      <div
-        class="shadow-elevated bg-surface flex h-full w-full max-w-md flex-col overflow-y-auto p-8"
-        (click)="$event.stopPropagation()">
-        <span class="text-primary text-[13px] font-semibold tracking-[0.22em] uppercase">{{ transaction() ? 'Editar movimiento cripto' : 'Nuevo movimiento cripto' }}</span>
-        <h1 class="text-ink mt-2 text-[26px] font-bold">{{ transaction() ? 'Editar' : 'Agrega un movimiento' }}</h1>
+    <app-modal
+      [title]="transaction() ? 'Editar' : 'Agrega un movimiento'"
+      [eyebrow]="transaction() ? 'Editar movimiento cripto' : 'Nuevo movimiento cripto'"
+      (closed)="cancelled.emit()">
+      <form
+        id="cryptoTxForm"
+        class="flex flex-col gap-5"
+        novalidate
+        (submit)="handleSubmit($event)">
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Cuenta</span>
+          <select
+            [formField]="txForm.accountId"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
+            <option value="">Selecciona una cuenta</option>
+            @for (account of cryptoAccounts(); track account.id) {
+              <option [value]="account.id">{{ account.name }}</option>
+            }
+          </select>
+        </label>
 
-        <form
-          class="mt-8 flex flex-1 flex-col gap-5"
-          novalidate
-          (submit)="handleSubmit($event)">
-          <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Cuenta</span>
+        <div class="flex gap-4">
+          <label class="flex flex-1 flex-col gap-2">
+            <span class="text-muted text-sm font-medium">Activo</span>
+            <input
+              type="text"
+              placeholder="BTC"
+              [formField]="txForm.assetSymbol"
+              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base uppercase outline-none" />
+          </label>
+          <label class="flex flex-1 flex-col gap-2">
+            <span class="text-muted text-sm font-medium">Tipo</span>
             <select
-              [formField]="txForm.accountId"
+              [formField]="txForm.type"
               class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
-              <option value="">Selecciona una cuenta</option>
-              @for (account of cryptoAccounts(); track account.id) {
-                <option [value]="account.id">{{ account.name }}</option>
+              @for (type of types; track type) {
+                <option [value]="type">{{ typeLabels[type] }}</option>
               }
             </select>
           </label>
+        </div>
 
-          <div class="flex gap-4">
-            <label class="flex flex-1 flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Activo</span>
-              <input
-                type="text"
-                placeholder="BTC"
-                [formField]="txForm.assetSymbol"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base uppercase outline-none" />
-            </label>
-            <label class="flex flex-1 flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Tipo</span>
-              <select
-                [formField]="txForm.type"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
-                @for (type of types; track type) {
-                  <option [value]="type">{{ typeLabels[type] }}</option>
-                }
-              </select>
-            </label>
-          </div>
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Cantidad</span>
+          <input
+            type="number"
+            step="0.00000001"
+            [formField]="txForm.quantity"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+          @if (txForm.quantity().touched() && txForm.quantity().invalid()) {
+            <span class="text-negative text-sm">Ingresa una cantidad mayor a cero.</span>
+          }
+        </label>
 
-          <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Cantidad</span>
+        <div class="flex gap-4">
+          <label class="flex flex-1 flex-col gap-2">
+            <span class="text-muted text-sm font-medium">Precio unitario (opcional)</span>
             <input
               type="number"
-              step="0.00000001"
-              [formField]="txForm.quantity"
-              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
-            @if (txForm.quantity().touched() && txForm.quantity().invalid()) {
-              <span class="text-negative text-sm">Ingresa una cantidad mayor a cero.</span>
-            }
-          </label>
-
-          <div class="flex gap-4">
-            <label class="flex flex-1 flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Precio unitario (opcional)</span>
-              <input
-                type="number"
-                step="0.01"
-                [formField]="txForm.pricePerUnit"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
-            </label>
-            <label class="flex flex-1 flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Moneda</span>
-              <select
-                [formField]="txForm.fiatCurrency"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
-                @for (currency of fiatCurrencies; track currency) {
-                  <option [value]="currency">{{ currency }}</option>
-                }
-              </select>
-            </label>
-          </div>
-
-          <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Fecha</span>
-            <input
-              type="date"
-              [formField]="txForm.occurredAt"
+              step="0.01"
+              [formField]="txForm.pricePerUnit"
               class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
           </label>
-
-          <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Notas (opcional)</span>
-            <input
-              type="text"
-              [formField]="txForm.notes"
-              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+          <label class="flex flex-1 flex-col gap-2">
+            <span class="text-muted text-sm font-medium">Moneda</span>
+            <select
+              [formField]="txForm.fiatCurrency"
+              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
+              @for (currency of fiatCurrencies; track currency) {
+                <option [value]="currency">{{ currency }}</option>
+              }
+            </select>
           </label>
+        </div>
 
-          @if (errorMessage()) {
-            <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
-          }
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Fecha</span>
+          <input
+            type="date"
+            [formField]="txForm.occurredAt"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+        </label>
 
-          <div class="mt-auto flex gap-3 pt-6">
-            <button
-              type="button"
-              (click)="cancelled.emit()"
-              class="border-ink text-ink hover:bg-ink flex-1 rounded-full border px-6 py-3.5 text-base font-semibold transition-colors duration-300 hover:text-white">
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              [disabled]="isSubmitting()"
-              class="bg-primary hover:bg-primary-dark flex-1 rounded-full px-6 py-3.5 text-base font-semibold text-white transition-colors duration-300 disabled:opacity-60">
-              {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Notas (opcional)</span>
+          <input
+            type="text"
+            [formField]="txForm.notes"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+        </label>
+
+        @if (errorMessage()) {
+          <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
+        }
+      </form>
+      <button
+        ngProjectAs="[modal-footer]"
+        type="button"
+        (click)="cancelled.emit()"
+        class="border-ink text-ink hover:bg-ink flex-1 rounded-full border px-6 py-3.5 text-base font-semibold transition-colors duration-300 hover:text-white">
+        Cancelar
+      </button>
+      <button
+        ngProjectAs="[modal-footer]"
+        type="submit"
+        form="cryptoTxForm"
+        [disabled]="isSubmitting()"
+        class="bg-primary hover:bg-primary-dark flex-1 rounded-full px-6 py-3.5 text-base font-semibold text-white transition-colors duration-300 disabled:opacity-60">
+        {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
+      </button>
+    </app-modal>
   `
 })
 export class CryptoTransactionForm {

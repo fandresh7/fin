@@ -1,5 +1,6 @@
 import { Component, inject, input, linkedSignal, output, signal } from '@angular/core'
 import { FormField, form, required, submit } from '@angular/forms/signals'
+import { Modal } from '../../../shared/components/modal/modal'
 import { Category, CategoryInput, CategoryType } from '../../../core/categories/category.model'
 import { CategoriesService } from '../../../core/categories/categories.service'
 
@@ -10,71 +11,67 @@ function buildModel(category: Category | null): CategoryInput {
 
 @Component({
   selector: 'app-category-form',
-  imports: [FormField],
+  imports: [FormField, Modal],
   template: `
-    <div
-      class="bg-ink/40 fixed inset-0 z-50 flex items-center justify-center px-4"
-      (click)="cancelled.emit()">
-      <div
-        class="shadow-elevated border-border bg-surface w-full max-w-sm rounded-[22px] border p-7"
-        (click)="$event.stopPropagation()">
-        <h2 class="text-ink text-lg font-bold">{{ category() ? 'Editar categoría' : 'Nueva categoría' }}</h2>
-
-        <form
-          class="mt-6 flex flex-col gap-5"
-          novalidate
-          (submit)="handleSubmit($event)">
-          <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Nombre</span>
-            <input
-              type="text"
-              placeholder="Mascotas"
-              [formField]="categoryForm.name"
-              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
-            @if (categoryForm.name().touched() && categoryForm.name().invalid()) {
-              <span class="text-negative text-sm">El nombre es obligatorio.</span>
-            }
-          </label>
-
-          <div class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Tipo</span>
-            <div class="bg-paper flex gap-2 rounded-full p-1">
-              @for (option of typeOptions; track option.value) {
-                <button
-                  type="button"
-                  (click)="setType(option.value)"
-                  [class]="
-                    model().type === option.value
-                      ? 'bg-primary flex-1 rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200'
-                      : 'text-muted hover:text-ink flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200'
-                  ">
-                  {{ option.label }}
-                </button>
-              }
-            </div>
-          </div>
-
-          @if (errorMessage()) {
-            <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
+    <app-modal
+      [title]="category() ? 'Editar categoría' : 'Nueva categoría'"
+      panelWidth="sm"
+      (closed)="cancelled.emit()">
+      <form
+        id="categoryForm"
+        class="flex flex-col gap-5"
+        novalidate
+        (submit)="handleSubmit($event)">
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Nombre</span>
+          <input
+            type="text"
+            placeholder="Mascotas"
+            [formField]="categoryForm.name"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+          @if (categoryForm.name().touched() && categoryForm.name().invalid()) {
+            <span class="text-negative text-sm">El nombre es obligatorio.</span>
           }
+        </label>
 
-          <div class="mt-2 flex justify-end gap-3">
-            <button
-              type="button"
-              (click)="cancelled.emit()"
-              class="border-ink text-ink hover:bg-ink rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:text-white">
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              [disabled]="isSubmitting()"
-              class="bg-primary hover:bg-primary-dark rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-300 disabled:opacity-60">
-              {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
-            </button>
+        <div class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Tipo</span>
+          <div class="bg-paper flex gap-2 rounded-full p-1">
+            @for (option of typeOptions; track option.value) {
+              <button
+                type="button"
+                (click)="setType(option.value)"
+                [class]="
+                  model().type === option.value
+                    ? 'bg-primary flex-1 rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200'
+                    : 'text-muted hover:text-ink flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200'
+                ">
+                {{ option.label }}
+              </button>
+            }
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+
+        @if (errorMessage()) {
+          <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
+        }
+      </form>
+      <button
+        ngProjectAs="[modal-footer]"
+        type="button"
+        (click)="cancelled.emit()"
+        class="border-ink text-ink hover:bg-ink rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:text-white">
+        Cancelar
+      </button>
+      <button
+        ngProjectAs="[modal-footer]"
+        type="submit"
+        form="categoryForm"
+        [disabled]="isSubmitting()"
+        class="bg-primary hover:bg-primary-dark rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-300 disabled:opacity-60">
+        {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
+      </button>
+    </app-modal>
   `
 })
 export class CategoryForm {

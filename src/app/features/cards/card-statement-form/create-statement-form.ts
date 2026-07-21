@@ -1,5 +1,6 @@
 import { Component, inject, input, linkedSignal, output, signal } from '@angular/core'
 import { FormField, form, required, submit } from '@angular/forms/signals'
+import { Modal } from '../../../shared/components/modal/modal'
 import { CardStatementInput } from '../../../core/card-statements/card-statement.model'
 import { CardStatementsService } from '../../../core/card-statements/card-statements.service'
 
@@ -9,66 +10,62 @@ function buildModel(accountId: string | null): CardStatementInput {
 
 @Component({
   selector: 'app-create-statement-form',
-  imports: [FormField],
+  imports: [FormField, Modal],
   template: `
-    <div
-      class="bg-ink/40 fixed inset-0 z-50 flex items-center justify-center px-4"
-      (click)="cancelled.emit()">
-      <div
-        class="shadow-elevated border-border bg-surface w-full max-w-sm rounded-[22px] border p-7"
-        (click)="$event.stopPropagation()">
-        <h2 class="text-ink text-lg font-bold">Nuevo ciclo de facturación</h2>
-
-        <form
-          class="mt-6 flex flex-col gap-5"
-          novalidate
-          (submit)="handleSubmit($event)">
-          <div class="flex gap-4">
-            <label class="flex flex-1 flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Corte anterior</span>
-              <input
-                type="date"
-                [formField]="statementForm.periodStart"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
-            </label>
-            <label class="flex flex-1 flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Corte actual</span>
-              <input
-                type="date"
-                [formField]="statementForm.periodEnd"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
-            </label>
-          </div>
-
-          <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Fecha de pago</span>
+    <app-modal
+      title="Nuevo ciclo de facturación"
+      panelWidth="sm"
+      (closed)="cancelled.emit()">
+      <form
+        id="createStatementForm"
+        class="flex flex-col gap-5"
+        novalidate
+        (submit)="handleSubmit($event)">
+        <div class="flex gap-4">
+          <label class="flex flex-1 flex-col gap-2">
+            <span class="text-muted text-sm font-medium">Corte anterior</span>
             <input
               type="date"
-              [formField]="statementForm.dueDate"
+              [formField]="statementForm.periodStart"
               class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
           </label>
+          <label class="flex flex-1 flex-col gap-2">
+            <span class="text-muted text-sm font-medium">Corte actual</span>
+            <input
+              type="date"
+              [formField]="statementForm.periodEnd"
+              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+          </label>
+        </div>
 
-          @if (errorMessage()) {
-            <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
-          }
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Fecha de pago</span>
+          <input
+            type="date"
+            [formField]="statementForm.dueDate"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+        </label>
 
-          <div class="mt-2 flex justify-end gap-3">
-            <button
-              type="button"
-              (click)="cancelled.emit()"
-              class="border-ink text-ink hover:bg-ink rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:text-white">
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              [disabled]="isSubmitting()"
-              class="bg-primary hover:bg-primary-dark rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-300 disabled:opacity-60">
-              {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        @if (errorMessage()) {
+          <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
+        }
+      </form>
+      <button
+        ngProjectAs="[modal-footer]"
+        type="button"
+        (click)="cancelled.emit()"
+        class="border-ink text-ink hover:bg-ink rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:text-white">
+        Cancelar
+      </button>
+      <button
+        ngProjectAs="[modal-footer]"
+        type="submit"
+        form="createStatementForm"
+        [disabled]="isSubmitting()"
+        class="bg-primary hover:bg-primary-dark rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-300 disabled:opacity-60">
+        {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
+      </button>
+    </app-modal>
   `
 })
 export class CreateStatementForm {

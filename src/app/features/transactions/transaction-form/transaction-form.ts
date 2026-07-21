@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, linkedSignal, output, signal, untracked } from '@angular/core'
 import { FormField, form, min, required, submit } from '@angular/forms/signals'
+import { Modal } from '../../../shared/components/modal/modal'
 import { AccountsService } from '../../../core/accounts/accounts.service'
 import { CardStatementsService } from '../../../core/card-statements/card-statements.service'
 import { CategoriesService } from '../../../core/categories/categories.service'
@@ -40,145 +41,140 @@ function buildModel(transaction: Transaction | null, defaultAccountId: string): 
 
 @Component({
   selector: 'app-transaction-form',
-  imports: [FormField],
+  imports: [FormField, Modal],
   template: `
-    <div
-      class="bg-ink/40 fixed inset-0 z-50 flex justify-end"
-      (click)="cancelled.emit()">
-      <div
-        class="shadow-elevated bg-surface flex h-full w-full max-w-md flex-col overflow-y-auto p-8"
-        (click)="$event.stopPropagation()">
-        <span class="text-primary text-[13px] font-semibold tracking-[0.22em] uppercase">{{ transaction() ? 'Editar movimiento' : 'Nuevo movimiento' }}</span>
-        <h1 class="text-ink mt-2 text-[26px] font-bold">{{ transaction() ? 'Editar' : 'Agrega un movimiento' }}</h1>
+    <app-modal
+      [title]="transaction() ? 'Editar' : 'Agrega un movimiento'"
+      [eyebrow]="transaction() ? 'Editar movimiento' : 'Nuevo movimiento'"
+      (closed)="cancelled.emit()">
+      <form
+        id="transactionForm"
+        class="flex flex-col gap-5"
+        novalidate
+        (submit)="handleSubmit($event)">
+        <div class="bg-paper flex gap-2 rounded-full p-1">
+          @for (option of typeOptions; track option.value) {
+            <button
+              type="button"
+              (click)="setType(option.value)"
+              [class]="
+                model().type === option.value
+                  ? 'bg-primary flex-1 rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200'
+                  : 'text-muted hover:text-ink flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200'
+              ">
+              {{ option.label }}
+            </button>
+          }
+        </div>
 
-        <form
-          class="mt-8 flex flex-1 flex-col gap-5"
-          novalidate
-          (submit)="handleSubmit($event)">
-          <div class="bg-paper flex gap-2 rounded-full p-1">
-            @for (option of typeOptions; track option.value) {
-              <button
-                type="button"
-                (click)="setType(option.value)"
-                [class]="
-                  model().type === option.value
-                    ? 'bg-primary flex-1 rounded-full px-4 py-2 text-sm font-semibold text-white transition-colors duration-200'
-                    : 'text-muted hover:text-ink flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200'
-                ">
-                {{ option.label }}
-              </button>
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">{{ model().type === 'transfer' ? 'Cuenta origen' : 'Cuenta' }}</span>
+          <select
+            [formField]="txForm.accountId"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
+            <option value="">Selecciona una cuenta</option>
+            @for (account of accountsService.accounts(); track account.id) {
+              <option [value]="account.id">{{ account.name }}</option>
             }
-          </div>
+          </select>
+          @if (txForm.accountId().touched() && txForm.accountId().invalid()) {
+            <span class="text-negative text-sm">Selecciona una cuenta.</span>
+          }
+        </label>
 
+        @if (model().type === 'transfer') {
           <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">{{ model().type === 'transfer' ? 'Cuenta origen' : 'Cuenta' }}</span>
+            <span class="text-muted text-sm font-medium">Cuenta destino</span>
             <select
-              [formField]="txForm.accountId"
+              [formField]="txForm.transferAccountId"
               class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
               <option value="">Selecciona una cuenta</option>
-              @for (account of accountsService.accounts(); track account.id) {
+              @for (account of destinationAccounts(); track account.id) {
                 <option [value]="account.id">{{ account.name }}</option>
               }
             </select>
-            @if (txForm.accountId().touched() && txForm.accountId().invalid()) {
-              <span class="text-negative text-sm">Selecciona una cuenta.</span>
-            }
           </label>
-
-          @if (model().type === 'transfer') {
-            <label class="flex flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Cuenta destino</span>
-              <select
-                [formField]="txForm.transferAccountId"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
-                <option value="">Selecciona una cuenta</option>
-                @for (account of destinationAccounts(); track account.id) {
-                  <option [value]="account.id">{{ account.name }}</option>
-                }
-              </select>
-            </label>
-          } @else {
-            <label class="flex flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Categoría</span>
-              <select
-                [formField]="txForm.categoryId"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
-                <option value="">Selecciona una categoría</option>
-                @for (category of categoriesForType(); track category.id) {
-                  <option [value]="category.id">{{ category.name }}</option>
-                }
-              </select>
-            </label>
-          }
-
-          @if (model().type === 'expense' && statementsForAccount().length > 0) {
-            <label class="flex flex-col gap-2">
-              <span class="text-muted text-sm font-medium">Ciclo de facturación (opcional)</span>
-              <select
-                [formField]="txForm.cardStatementId"
-                class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
-                <option value="">Sin vincular</option>
-                @for (statement of statementsForAccount(); track statement.id) {
-                  <option [value]="statement.id">{{ statement.periodStart }} → {{ statement.periodEnd }}</option>
-                }
-              </select>
-            </label>
-          }
-
+        } @else {
           <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Monto</span>
-            <input
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              [formField]="txForm.amount"
-              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
-            @if (txForm.amount().touched() && txForm.amount().invalid()) {
-              <span class="text-negative text-sm">Ingresa un monto mayor a cero.</span>
-            }
+            <span class="text-muted text-sm font-medium">Categoría</span>
+            <select
+              [formField]="txForm.categoryId"
+              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
+              <option value="">Selecciona una categoría</option>
+              @for (category of categoriesForType(); track category.id) {
+                <option [value]="category.id">{{ category.name }}</option>
+              }
+            </select>
           </label>
+        }
 
+        @if (model().type === 'expense' && statementsForAccount().length > 0) {
           <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Fecha</span>
-            <input
-              type="date"
-              [formField]="txForm.occurredAt"
-              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
-            @if (txForm.occurredAt().touched() && txForm.occurredAt().invalid()) {
-              <span class="text-negative text-sm">La fecha es obligatoria.</span>
-            }
+            <span class="text-muted text-sm font-medium">Ciclo de facturación (opcional)</span>
+            <select
+              [formField]="txForm.cardStatementId"
+              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
+              <option value="">Sin vincular</option>
+              @for (statement of statementsForAccount(); track statement.id) {
+                <option [value]="statement.id">{{ statement.periodStart }} → {{ statement.periodEnd }}</option>
+              }
+            </select>
           </label>
+        }
 
-          <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Descripción (opcional)</span>
-            <input
-              type="text"
-              placeholder="Supermercado, nómina, taxi…"
-              [formField]="txForm.description"
-              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
-          </label>
-
-          @if (errorMessage()) {
-            <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Monto</span>
+          <input
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            [formField]="txForm.amount"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+          @if (txForm.amount().touched() && txForm.amount().invalid()) {
+            <span class="text-negative text-sm">Ingresa un monto mayor a cero.</span>
           }
+        </label>
 
-          <div class="mt-auto flex gap-3 pt-6">
-            <button
-              type="button"
-              (click)="cancelled.emit()"
-              class="border-ink text-ink hover:bg-ink flex-1 rounded-full border px-6 py-3.5 text-base font-semibold transition-colors duration-300 hover:text-white">
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              [disabled]="isSubmitting()"
-              class="bg-primary hover:bg-primary-dark flex-1 rounded-full px-6 py-3.5 text-base font-semibold text-white transition-colors duration-300 disabled:opacity-60">
-              {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Fecha</span>
+          <input
+            type="date"
+            [formField]="txForm.occurredAt"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+          @if (txForm.occurredAt().touched() && txForm.occurredAt().invalid()) {
+            <span class="text-negative text-sm">La fecha es obligatoria.</span>
+          }
+        </label>
+
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Descripción (opcional)</span>
+          <input
+            type="text"
+            placeholder="Supermercado, nómina, taxi…"
+            [formField]="txForm.description"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+        </label>
+
+        @if (errorMessage()) {
+          <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
+        }
+      </form>
+      <button
+        ngProjectAs="[modal-footer]"
+        type="button"
+        (click)="cancelled.emit()"
+        class="border-ink text-ink hover:bg-ink flex-1 rounded-full border px-6 py-3.5 text-base font-semibold transition-colors duration-300 hover:text-white">
+        Cancelar
+      </button>
+      <button
+        ngProjectAs="[modal-footer]"
+        type="submit"
+        form="transactionForm"
+        [disabled]="isSubmitting()"
+        class="bg-primary hover:bg-primary-dark flex-1 rounded-full px-6 py-3.5 text-base font-semibold text-white transition-colors duration-300 disabled:opacity-60">
+        {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
+      </button>
+    </app-modal>
   `
 })
 export class TransactionForm {

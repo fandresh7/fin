@@ -1,6 +1,7 @@
 import { Component, inject, input, linkedSignal, output, signal } from '@angular/core'
 import { DecimalPipe } from '@angular/common'
 import { FormField, form, min, submit } from '@angular/forms/signals'
+import { Modal } from '../../../shared/components/modal/modal'
 import { CardStatement, CardStatementStatus, CardStatementUpdateInput, CARD_STATEMENT_STATUS_LABELS } from '../../../core/card-statements/card-statement.model'
 import { CardStatementsService } from '../../../core/card-statements/card-statements.service'
 
@@ -19,67 +20,64 @@ const EMPTY_STATEMENT: CardStatement = {
 
 @Component({
   selector: 'app-edit-statement-form',
-  imports: [FormField, DecimalPipe],
+  imports: [FormField, DecimalPipe, Modal],
   template: `
-    <div
-      class="bg-ink/40 fixed inset-0 z-50 flex items-center justify-center px-4"
-      (click)="cancelled.emit()">
-      <div
-        class="shadow-elevated border-border bg-surface w-full max-w-sm rounded-[22px] border p-7"
-        (click)="$event.stopPropagation()">
-        <h2 class="text-ink text-lg font-bold">Editar ciclo</h2>
-        <p class="text-muted mt-1 text-sm">{{ statement().periodStart }} → {{ statement().periodEnd }}</p>
-        <p class="text-ink mt-3 text-2xl font-bold">{{ statement().totalAmount | number: '1.0-0' }}</p>
-        <p class="text-muted text-sm">Total facturado</p>
+    <app-modal
+      title="Editar ciclo"
+      [eyebrow]="statement().periodStart + ' → ' + statement().periodEnd"
+      panelWidth="sm"
+      (closed)="cancelled.emit()">
+      <p class="text-ink text-2xl font-bold">{{ statement().totalAmount | number: '1.0-0' }}</p>
+      <p class="text-muted mb-4 text-sm">Total facturado</p>
 
-        <form
-          class="mt-6 flex flex-col gap-5"
-          novalidate
-          (submit)="handleSubmit($event)">
-          <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Estado</span>
-            <select
-              [formField]="statementForm.status"
-              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
-              @for (status of statuses; track status) {
-                <option [value]="status">{{ statusLabels[status] }}</option>
-              }
-            </select>
-          </label>
-
-          <label class="flex flex-col gap-2">
-            <span class="text-muted text-sm font-medium">Monto pagado</span>
-            <input
-              type="number"
-              step="1000"
-              [formField]="statementForm.paidAmount"
-              class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
-            @if (statementForm.paidAmount().touched() && statementForm.paidAmount().invalid()) {
-              <span class="text-negative text-sm">El monto pagado no puede ser negativo.</span>
+      <form
+        id="editStatementForm"
+        class="flex flex-col gap-5"
+        novalidate
+        (submit)="handleSubmit($event)">
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Estado</span>
+          <select
+            [formField]="statementForm.status"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none">
+            @for (status of statuses; track status) {
+              <option [value]="status">{{ statusLabels[status] }}</option>
             }
-          </label>
+          </select>
+        </label>
 
-          @if (errorMessage()) {
-            <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
+        <label class="flex flex-col gap-2">
+          <span class="text-muted text-sm font-medium">Monto pagado</span>
+          <input
+            type="number"
+            step="1000"
+            [formField]="statementForm.paidAmount"
+            class="border-border bg-paper text-ink focus:border-primary focus:bg-surface w-full rounded-xl border px-4 py-3.5 text-base outline-none" />
+          @if (statementForm.paidAmount().touched() && statementForm.paidAmount().invalid()) {
+            <span class="text-negative text-sm">El monto pagado no puede ser negativo.</span>
           }
+        </label>
 
-          <div class="mt-2 flex justify-end gap-3">
-            <button
-              type="button"
-              (click)="cancelled.emit()"
-              class="border-ink text-ink hover:bg-ink rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:text-white">
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              [disabled]="isSubmitting()"
-              class="bg-primary hover:bg-primary-dark rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-300 disabled:opacity-60">
-              {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        @if (errorMessage()) {
+          <p class="bg-negative-soft text-negative rounded-lg px-3.5 py-2.5 text-sm">{{ errorMessage() }}</p>
+        }
+      </form>
+      <button
+        ngProjectAs="[modal-footer]"
+        type="button"
+        (click)="cancelled.emit()"
+        class="border-ink text-ink hover:bg-ink rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:text-white">
+        Cancelar
+      </button>
+      <button
+        ngProjectAs="[modal-footer]"
+        type="submit"
+        form="editStatementForm"
+        [disabled]="isSubmitting()"
+        class="bg-primary hover:bg-primary-dark rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-300 disabled:opacity-60">
+        {{ isSubmitting() ? 'Guardando…' : 'Guardar' }}
+      </button>
+    </app-modal>
   `
 })
 export class EditStatementForm {
