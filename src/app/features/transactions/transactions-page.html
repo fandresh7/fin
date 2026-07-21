@@ -17,8 +17,8 @@
   </button>
 </div>
 
-<div class="border-border bg-surface mt-6 flex flex-wrap items-end gap-3 rounded-[20px] border p-4">
-  <label class="flex min-w-[9rem] flex-1 flex-col gap-1.5 sm:flex-none">
+<div class="border-border bg-surface mt-6 grid grid-cols-2 gap-3 rounded-[20px] border p-4 sm:flex sm:flex-wrap sm:items-end">
+  <label class="flex flex-col gap-1.5 sm:min-w-[9rem] sm:flex-1 sm:flex-none">
     <span class="text-muted text-xs font-medium">Cuenta</span>
     <select
       [value]="filterAccountId()"
@@ -31,7 +31,7 @@
     </select>
   </label>
 
-  <label class="flex min-w-[9rem] flex-1 flex-col gap-1.5 sm:flex-none">
+  <label class="flex flex-col gap-1.5 sm:min-w-[9rem] sm:flex-1 sm:flex-none">
     <span class="text-muted text-xs font-medium">Categoría</span>
     <select
       [value]="filterCategoryId()"
@@ -44,7 +44,7 @@
     </select>
   </label>
 
-  <label class="flex min-w-[8rem] flex-1 flex-col gap-1.5 sm:flex-none">
+  <label class="flex flex-col gap-1.5 sm:min-w-[8rem] sm:flex-1 sm:flex-none">
     <span class="text-muted text-xs font-medium">Desde</span>
     <input
       type="date"
@@ -53,7 +53,7 @@
       class="border-border bg-paper text-ink focus:border-primary w-full rounded-lg border px-3 py-2 text-sm outline-none" />
   </label>
 
-  <label class="flex min-w-[8rem] flex-1 flex-col gap-1.5 sm:flex-none">
+  <label class="flex flex-col gap-1.5 sm:min-w-[8rem] sm:flex-1 sm:flex-none">
     <span class="text-muted text-xs font-medium">Hasta</span>
     <input
       type="date"
@@ -66,7 +66,7 @@
   <button
     type="button"
     (click)="clearFilters()"
-    class="border-border text-ink hover:border-ink rounded-full border px-4 py-2 text-sm font-semibold transition-colors duration-300">
+    class="border-border text-ink hover:border-ink col-span-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors duration-300 sm:col-auto">
     Limpiar filtros
   </button>
   }
